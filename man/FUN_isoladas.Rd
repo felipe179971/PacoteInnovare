@@ -5,7 +5,7 @@
 \alias{FUN_isoladas}
 \title{Função de Frequência}
 \usage{
-FUN_isoladas(TABELA, DICIONARIO, variaveis, adc_labels = T)
+FUN_isoladas(TABELA, DICIONARIO, variaveis, adc_labels = TRUE)
 }
 \arguments{
 \item{TABELA}{Tabela já filtrada pelos splits}
@@ -31,74 +31,70 @@ Se \code{adc_labels=TRUE}, essa função retorna um \code{tibble} contendo 6 col
 Essa função calcula a frequência e a porcentagem das variáveis desejadas.
 }
 \examples{
+
 library(tidyverse)
-#Criando o data.frame com os dados#########################
-#Número de linhas
-n=100
-#Variável de sexo
-set.seed(1)
-v1=sample(1:2,n,replace = TRUE)
-#variável de renda
-set.seed(2)
-v2=sample(1:4,n,replace = TRUE)
-#Variável da UF
-set.seed(3)
-v3=sample(1:10,n,replace = TRUE)
-#Peso (sexo)
-v4<-v1
-v4[which(v4==1)]<-(n/2)/length(v1[which(v1==1)])
-v4[which(v4==2)]<-(n/2)/length(v1[which(v1==2)])
-
-dados<-data.frame(v1,v2,v3,v4)
-#Criando o Dicionário dos dados#########################
-Label=data.frame(
-  id=c(rep(1,length(v1\%>\%unique())),
-       rep(2,length(v2\%>\%unique())),
-       rep(3,length(v3\%>\%unique()))),
-  variavel=c(rep("v1",length(v1\%>\%unique())),
-             rep("v2",length(v2\%>\%unique())),
-             rep("v3",length(v3\%>\%unique()))),
-  codigo=c(v1\%>\%unique(),v2\%>\%unique(),v3\%>\%unique()),
-  label=c("Masculino","Feminino",
-          "Baixa Renda","Classe Média","Classe Alta","Milionário",
-          paste("Cidade",seq(1:10)))
+#Arquivos
+dados<-PacoteInnovare::Example()[[1]]
+Label<-PacoteInnovare::Example()[[2]]
+Enunciado<-PacoteInnovare::Example()[[3]]
+##Fazendo o tratamento para entrar na função
+#Como tenho dois arquivos, um para o enunciado e outro para o dicionário,
+#usarei a função func_labels
+Dicionario=PacoteInnovare::func_labels(tabela_labels=Label,
+                                       tabela_enunciado=Enunciado,
+                                       col_codigo="codigo",
+                                       col_label="label",
+                                       col_var="variavel",
+                                       col_enunciado="enunciado")
+#Identificando nosso splits
+split_sexo<-Dicionario\%>\%
+  dplyr::filter(opcao_variavel=="v1")\%>\%
+  dplyr::select("v1"=opcao_cod,"splits"=opcao_label)
+split_time<-Dicionario\%>\%
+  dplyr::filter(opcao_variavel=="v17")\%>\%
+  dplyr::select("v17"=opcao_cod,"splits"=opcao_label)
+split_tipo<-Dicionario\%>\%
+  dplyr::filter(opcao_variavel=="v19")\%>\%
+  dplyr::select("v19"=opcao_cod,"splits"=opcao_label)
+#Criando a tabela no formato Nest Tibble dividido pelos splits
+dados_split<-dplyr::bind_rows(
+  #Split por sexo, cujo peso está na v4
+  dados \%>\%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = v4) \%>\%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_sexo) \%>\%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Split por time, cujo peso está na v18
+  dados \%>\%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = v18) \%>\%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_time) \%>\%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Split por tipo (não tem peso)
+  dados \%>\%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = 1) \%>\%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_tipo) \%>\%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Geral (não tem peso)
+  dados\%>\%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = 1,splits=as.character("Geral")) \%>\%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits)
 )
-#Tratando para entrar na função#######################
-dados_peso <- dados \%>\%
-  dplyr::mutate("peso" = v4)
+#Calculando a frequência de "v1" no split "Geral"
+PacoteInnovare::FUN_isoladas(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
+                             DICIONARIO=Dicionario,
+                             variaveis="v1",
+                             adc_labels = TRUE)
 
-splits <- dados_peso \%>\% dplyr::mutate(v1=as.character(v1))\%>\%
-  dplyr::distinct(v1) \%>\%
-  dplyr::left_join(
-    y = Label \%>\%
-      dplyr::filter(variavel == "v1") \%>\%
-      dplyr::select("v1" = codigo, "splits" = label) \%>\%
-      dplyr::mutate(across(v1, as.character))
-  )
-Dados_splits <- dados_peso \%>\% dplyr::mutate(v1=as.character(v1))\%>\%
-  dplyr::left_join(splits) \%>\%
-  dplyr::group_nest(splits) \%>\%
-  dplyr::bind_rows(
-    dados_peso \%>\% dplyr::mutate(v1=as.character(v1))\%>\%
-      dplyr::mutate(splits = "Geral") \%>\%
-      dplyr::group_nest(splits)
-  ) \%>\%
-  dplyr::mutate(data = map(data, ~ dplyr::select(., peso, matches("v\\\\d+"))))
-Label<-Label\%>\%dplyr::rename(opcao_variavel="variavel",opcao_cod="codigo",opcao_label="label")
-
-#Executando#########################################
-#Apenas uma variável sem label do split (adc_labels = FALSE)
-FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1",
-            adc_labels = FALSE)
-#Mais de uma variável e com label do split (adc_labels = TRUE)
-FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = c("v1","v2","v3"),
-             adc_labels = TRUE)
-#Pelos splits, com label
-Dados_splits\%>\%
-  dplyr::mutate(data = map(data, .f = ~ FUN_isoladas(., DICIONARIO = Label, variaveis = "v1",
-   adc_labels = TRUE)))
-
-rm(a,dados,dados_peso,Dados_splits,Label,splits,n,v1,v2,v3,v4)\%>\%suppressWarnings()
 
 }
 \author{

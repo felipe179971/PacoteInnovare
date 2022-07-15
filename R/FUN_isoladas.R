@@ -22,96 +22,93 @@
 #' @author Felipe Ferreira \email{felipe179971@hotmail.com} e Rafael Peixoto \email{peixoto.rafael@outlook.com}.
 #'
 #' @examples
+#'
 #' library(tidyverse)
-#' #Criando o data.frame com os dados#########################
-#' #Número de linhas
-#' n=100
-#' #Variável de sexo
-#' set.seed(1)
-#' v1=sample(1:2,n,replace = TRUE)
-#' #variável de renda
-#' set.seed(2)
-#' v2=sample(1:4,n,replace = TRUE)
-#' #Variável da UF
-#' set.seed(3)
-#' v3=sample(1:10,n,replace = TRUE)
-#' #Peso (sexo)
-#' v4<-v1
-#' v4[which(v4==1)]<-(n/2)/length(v1[which(v1==1)])
-#' v4[which(v4==2)]<-(n/2)/length(v1[which(v1==2)])
-#'
-#' dados<-data.frame(v1,v2,v3,v4)
-#' #Criando o Dicionário dos dados#########################
-#' Label=data.frame(
-#'   id=c(rep(1,length(v1%>%unique())),
-#'        rep(2,length(v2%>%unique())),
-#'        rep(3,length(v3%>%unique()))),
-#'   variavel=c(rep("v1",length(v1%>%unique())),
-#'              rep("v2",length(v2%>%unique())),
-#'              rep("v3",length(v3%>%unique()))),
-#'   codigo=c(v1%>%unique(),v2%>%unique(),v3%>%unique()),
-#'   label=c("Masculino","Feminino",
-#'           "Baixa Renda","Classe Média","Classe Alta","Milionário",
-#'           paste("Cidade",seq(1:10)))
+#' #Arquivos
+#' dados<-PacoteInnovare::Example()[[1]]
+#' Label<-PacoteInnovare::Example()[[2]]
+#' Enunciado<-PacoteInnovare::Example()[[3]]
+#' ##Fazendo o tratamento para entrar na função
+#' #Como tenho dois arquivos, um para o enunciado e outro para o dicionário,
+#' #usarei a função func_labels
+#' Dicionario=PacoteInnovare::func_labels(tabela_labels=Label,
+#'                                        tabela_enunciado=Enunciado,
+#'                                        col_codigo="codigo",
+#'                                        col_label="label",
+#'                                        col_var="variavel",
+#'                                        col_enunciado="enunciado")
+#' #Identificando nosso splits
+#' split_sexo<-Dicionario%>%
+#'   dplyr::filter(opcao_variavel=="v1")%>%
+#'   dplyr::select("v1"=opcao_cod,"splits"=opcao_label)
+#' split_time<-Dicionario%>%
+#'   dplyr::filter(opcao_variavel=="v17")%>%
+#'   dplyr::select("v17"=opcao_cod,"splits"=opcao_label)
+#' split_tipo<-Dicionario%>%
+#'   dplyr::filter(opcao_variavel=="v19")%>%
+#'   dplyr::select("v19"=opcao_cod,"splits"=opcao_label)
+#' #Criando a tabela no formato Nest Tibble dividido pelos splits
+#' dados_split<-dplyr::bind_rows(
+#'   #Split por sexo, cujo peso está na v4
+#'   dados %>%
+#'     # Atribuir o peso para a coluna "peso"
+#'     dplyr::mutate("peso" = v4) %>%
+#'     # Juntar a tabela com os labels dos splits
+#'     dplyr::left_join(split_sexo) %>%
+#'     # dividir a tabela pelos splits
+#'     dplyr::group_nest(splits),
+#'   #Adicionando o Split por time, cujo peso está na v18
+#'   dados %>%
+#'     # Atribuir o peso para a coluna "peso"
+#'     dplyr::mutate("peso" = v18) %>%
+#'     # Juntar a tabela com os labels dos splits
+#'     dplyr::left_join(split_time) %>%
+#'     # dividir a tabela pelos splits
+#'     dplyr::group_nest(splits),
+#'   #Adicionando o Split por tipo (não tem peso)
+#'   dados %>%
+#'     # Atribuir o peso para a coluna "peso"
+#'     dplyr::mutate("peso" = 1) %>%
+#'     # Juntar a tabela com os labels dos splits
+#'     dplyr::left_join(split_tipo) %>%
+#'     # dividir a tabela pelos splits
+#'     dplyr::group_nest(splits),
+#'   #Adicionando o Geral (não tem peso)
+#'   dados%>%
+#'     # Atribuir o peso para a coluna "peso"
+#'     dplyr::mutate("peso" = 1,splits=as.character("Geral")) %>%
+#'     # dividir a tabela pelos splits
+#'     dplyr::group_nest(splits)
 #' )
-#' #Tratando para entrar na função#######################
-#' dados_peso <- dados %>%
-#'   dplyr::mutate("peso" = v4)
+#' #Calculando a frequência de "v1" no split "Geral"
+#' PacoteInnovare::FUN_isoladas(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
+#'                              DICIONARIO=Dicionario,
+#'                              variaveis="v1",
+#'                              adc_labels = TRUE)
 #'
-#' splits <- dados_peso %>% dplyr::mutate(v1=as.character(v1))%>%
-#'   dplyr::distinct(v1) %>%
-#'   dplyr::left_join(
-#'     y = Label %>%
-#'       dplyr::filter(variavel == "v1") %>%
-#'       dplyr::select("v1" = codigo, "splits" = label) %>%
-#'       dplyr::mutate(across(v1, as.character))
-#'   )
-#' Dados_splits <- dados_peso %>% dplyr::mutate(v1=as.character(v1))%>%
-#'   dplyr::left_join(splits) %>%
-#'   dplyr::group_nest(splits) %>%
-#'   dplyr::bind_rows(
-#'     dados_peso %>% dplyr::mutate(v1=as.character(v1))%>%
-#'       dplyr::mutate(splits = "Geral") %>%
-#'       dplyr::group_nest(splits)
-#'   ) %>%
-#'   dplyr::mutate(data = map(data, ~ dplyr::select(., peso, matches("v\\d+"))))
-#' Label<-Label%>%dplyr::rename(opcao_variavel="variavel",opcao_cod="codigo",opcao_label="label")
 #'
-#' #Executando#########################################
-#' #Apenas uma variável sem label do split (adc_labels = FALSE)
-#' FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1",
-#'             adc_labels = FALSE)
-#' #Mais de uma variável e com label do split (adc_labels = TRUE)
-#' FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = c("v1","v2","v3"),
-#'              adc_labels = TRUE)
-#' #Pelos splits, com label
-#' Dados_splits%>%
-#'   dplyr::mutate(data = map(data, .f = ~ FUN_isoladas(., DICIONARIO = Label, variaveis = "v1",
-#'    adc_labels = TRUE)))
-#'
-#'rm(a,dados,dados_peso,Dados_splits,Label,splits,n,v1,v2,v3,v4)%>%suppressWarnings()
-#'
-#' @import tidyverse Hmisc purrr dplyr stringr
+#' @import tidyverse purrr dplyr stringr tibble
 #'
 #' @encoding UTF-8
 #' @export
 
 
-FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = T) {
-
+FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = TRUE) {
+  Tempo_Inicio<-Sys.time()
+  `%nin%` = Negate(`%in%`)
   out <- vector("list", length = length(variaveis))
   base <- vector("list", length = length(variaveis))
 
   # Verificar se cada variável está no dicionário
   for (i in seq_along(out)) {
 
-    if (variaveis[i] %nin% c(DICIONARIO %>% distinct(opcao_variavel) %>% pull())) {
-      warning(str_c("Variavel ", variaveis[i], " nao presente no dicionario"))
+    if (variaveis[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull())) {
+      warning(stringr::str_c("Variavel ", variaveis[i], " nao presente no dicionario"))
     }
 
   }
-  if (any(variaveis %nin% c(DICIONARIO %>% distinct(opcao_variavel) %>% pull()))) {
-    stop(str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
+  if (any(variaveis %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()))) {
+    stop(stringr::str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
   }
 
   # calcular a tabela de frequência
@@ -119,47 +116,46 @@ FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = T) {
 
     var <- variaveis[i]
     labels <- DICIONARIO %>%
-      filter(opcao_variavel == var) %>%
-      select(opcao_cod, opcao_label) %>%
-      rename(!!var := "opcao_cod") %>%
-      rename(!!str_c(var, "_label") := "opcao_label") %>%
-      mutate(across(var, as.character)) %>%
-      arrange(.[[1]] %in% "-88") %>%
-      arrange(.[[1]] %in% "-99")
+      dplyr::filter(opcao_variavel == var) %>%
+      dplyr::select(opcao_cod, opcao_label) %>%
+      dplyr::rename(!!var := "opcao_cod") %>%
+      dplyr::rename(!!str_c(var, "_label") := "opcao_label") %>%
+      dplyr::mutate(across(var, as.character)) %>%
+      dplyr::arrange(.[[1]] %in% "-88") %>%
+      dplyr::arrange(.[[1]] %in% "-99")
 
     base[[i]] <- TABELA %>%
-      select(all_of(var), peso) %>%
-      mutate("n_base" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, 1, 0)) %>%
-      mutate("n_base" = sum(`n_base`)) %>%
-      mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
-      mutate("n_base_peso" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, peso, 0)) %>%
-      mutate("n_base_peso" = sum(`n_base_peso`)) %>%
-      mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
-      distinct(n_base, pct_base, n_base_peso, pct_base_peso)
+      dplyr::select(all_of(var), peso) %>%
+      dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, 1, 0)) %>%
+      dplyr::mutate("n_base" = sum(`n_base`)) %>%
+      dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
+      dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, peso, 0)) %>%
+      dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
+      dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
+      dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
 
     out[[i]] <- TABELA %>%
-      select(all_of(var), peso) %>%
-      mutate(across(all_of(var), ~ factor(., levels = labels[[1]]))) %>%
-      group_by(across(all_of(var)), .drop = F) %>%
-      summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
-      filter(!is.na(.[1])) %>%
-      mutate("pct" = (100 * n / sum(n))) %>%
-      mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
-      mutate(across(all_of(var), as.character)) %>%
-      map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
+      dplyr::select(all_of(var), peso) %>%
+      dplyr::mutate(across(all_of(var), ~ factor(., levels = labels[[1]]))) %>%
+      dplyr::group_by(across(all_of(var)), .drop = FALSE) %>%
+      dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
+      dplyr::filter(!is.na(.[1])) %>%
+      dplyr::mutate("pct" = (100 * n / sum(n))) %>%
+      dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
+      dplyr::mutate(across(all_of(var), as.character)) %>%
+      purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
       rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso)) %>%
       {
         if (adc_labels) {
-          left_join(x = ., y = labels , by = var) %>%
-            mutate(across(6, ~ replace(., .data[[var]] == "Total", "Total"))) %>%
-            mutate(across(6, ~ replace(., .data[[var]] == "Base", "Base")))
+          dplyr::left_join(x = ., y = labels , by = var) %>%
+            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Total", "Total"))) %>%
+            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Base", "Base")))
         } else {
-          tibble(.)
+          tibble::tibble(.)
         }
       }
-
+    print(paste0(variaveis[i]," [Variavel Simples ",i,"/",length(variaveis),"]"))
   }
-
+  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis simples"))
   return(out)
-
 }

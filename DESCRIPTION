@@ -13,9 +13,9 @@ RoxygenNote: 7.2.0
 URL: https://github.com/felipe179971/PacoteInnovare
 BugReports: https://github.com/felipe179971/PacoteInnovare/issues
 Imports: 
+      tibble,
       dplyr,
       tidyverse,
-      Hmisc,
       purrr,
       stringr
 Depends: 
