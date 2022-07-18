@@ -123,11 +123,11 @@ Example<-function(){
   #Colocando o Label do MRG
   Label<-rbind(Label,Label[which(Label$variavel%in%c("v13")),]%>%dplyr::mutate(id=max(Label$id)+1,variavel="v13mrg"))
   #Criando o arquivo com o enunciado
-  vars<-c(colnames(Dados)[-which(colnames(Dados)%in%c("v4","v17","v15","v16"))],"v13mrg","v15m","v16m")
+  vars<-c(colnames(Dados)[-which(colnames(Dados)%in%c("v4","v15","v16"))],"v13mrg","v15m","v16m")
   Enunciado=data.frame(
     id=seq(1:length(vars)),
     variavel=vars
   )%>%dplyr::mutate(enunciado=paste("Enunciado",variavel))
-  rm(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,vars,n)%>%suppressWarnings()
+  rm(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,vars,n,v20)%>%suppressWarnings()
   return(list(Dados,Label,Enunciado))
 }

@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{func_labels}
 \alias{func_labels}
-\title{func_labels}
+\title{Função Dicionário-Enunciado}
 \usage{
 func_labels(
   tabela_labels,
@@ -15,25 +15,50 @@ func_labels(
 )
 }
 \arguments{
-\item{tabela_labels}{...}
+\item{tabela_labels}{Tabela contendo o label da variável.}
 
-\item{tabela_enunciado}{...}
+\item{tabela_enunciado}{Tabela contendo o enunciado da variável.}
 
-\item{col_codigo}{...}
+\item{col_codigo}{Variável presente em \code{tabela_labels} contendo o código do label.}
 
-\item{col_label}{...}
+\item{col_label}{Variável presente em \code{tabela_labels} contendo os label's da variável.}
 
-\item{col_var}{...}
+\item{col_var}{Variável presente em \code{tabela_enunciado} e \code{tabela_labels} contendo a variável (Observe que as colunas contendo as variáveis precisam ter o mesmo nome nas duas Tabelas).}
 
-\item{col_enunciado}{...}
+\item{col_enunciado}{Variável presente em \code{tabela_enunciado} contendo o enunciado da variável.}
 }
 \value{
-...
+Entra-se com duas tabelas e retorna-se apenas uma contedo 4 colunas:
+\itemize{
+\item '\code{opcao_cod}': Coluna com o código do label.
+\item \code{opcao_label}: Coluna com os label's da variável.
+\item \code{opcao_variavel}: Coluna com a variável.
+\item \code{pergunta_enunciado}: Coluna com o enunciado da variável.
+}
 }
 \description{
-Calcula a diferença entre dois vetores do tipo \code{Sys.time}.
-Normalmente utilizada para avaliar o tempo de execução das demais funções do
-\code{PaceteInnovare}, é internalizada em diversas funções do pacote mas pode ser utilizada livremente.
+Utilizada para padronizar a entrada do parâmetro DICIONARIO da função
+FUN_isoladas, é muito útil nos casos em que trabalhamos com dois arquivos distintos,
+um contendo os lábels das variáveis e outro com o enunciado.
+}
+\examples{
+#Arquivos
+dados<-PacoteInnovare::Example()[[1]]
+Label<-PacoteInnovare::Example()[[2]]
+Enunciado<-PacoteInnovare::Example()[[3]]
+#Como tenho dois arquivos, um para o enunciado e outro para o dicionário,
+head(Label)
+head(Enunciado)
+#usarei a função func_labels
+
+Dicionario=PacoteInnovare::func_labels(tabela_labels=Label,
+                                       tabela_enunciado=Enunciado,
+                                       col_codigo="codigo",
+                                       col_label="label",
+                                       col_var="variavel",
+                                       col_enunciado="enunciado")
+head(Dicionario)
+
 }
 \author{
 Felipe Ferreira \email{felipe179971@hotmail.com} e Rafael Peixoto \email{peixoto.rafael@outlook.com}.

@@ -38,7 +38,7 @@ splits <- dados_peso %>% dplyr::mutate(v1=as.character(v1))%>%
     y = Label %>%
       dplyr::filter(variavel == "v1") %>%
       dplyr::select("v1" = codigo, "splits" = label) %>%
-      dplyr::mutate(across(v1, as.character))
+      dplyr::mutate(dplyr::across(v1, as.character))
   )
 Dados_splits <- dados_peso %>% dplyr::mutate(v1=as.character(v1))%>%
   dplyr::left_join(splits) %>%
@@ -53,12 +53,182 @@ Label<-Label%>%dplyr::rename(opcao_variavel="variavel",opcao_cod="codigo",opcao_
 
 #Executando#########################################
 #Testando se faz a frequencia
-a<-FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = F)%>%data.frame()
+a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = F)%>%data.frame()
 expect_equal(nrow(a),4);expect_equal(ncol(a),5);expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso"))
 expect_equal(a[,1],c("1","2","Total","Base"));expect_equal(a[,2],c(49,51,100,100));expect_equal(a[,3],c(50,50,100,100));expect_equal(a[,4],c(49,51,100,100));expect_equal(a[,5],c(50,50,100,100))
 #Testando o parâmetro adc_labels
-a<-FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = T)%>%data.frame()
+a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = T)%>%data.frame()
 expect_equal(nrow(a),4);expect_equal(ncol(a),6);expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso","v1_label"))
 expect_equal(a[,1],c("1","2","Total","Base"));expect_equal(a[,2],c(49,51,100,100));expect_equal(a[,3],c(50,50,100,100));expect_equal(a[,4],c(49,51,100,100));expect_equal(a[,5],c(50,50,100,100));expect_equal(a[,6],c("Masculino","Feminino","Total","Base"))
 
 rm(a,dados,dados_peso,Dados_splits,Label,splits,n,v1,v2,v3,v4)%>%suppressWarnings()
+
+###################Time_Difference##############################################
+expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03"),"1 horas, 0 minutos e 0 segundos")
+expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03"),"1 horas, 0 minutos e 52.999999999992 segundos")
+expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03"),"0 horas, 10 minutos e 0 segundos")
+expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03"),"-23 horas, 23 minutos e 12.999999999984 segundos")
+#######################func_labels##############################################
+Label<-PacoteInnovare::Example()[[2]]
+Enunciado<-PacoteInnovare::Example()[[3]]
+Dicionario=PacoteInnovare::func_labels(tabela_labels=Label,
+                                      tabela_enunciado=Enunciado,
+                                      col_codigo="codigo",
+                                      col_label="label",
+                                      col_var="variavel",
+                                      col_enunciado="enunciado")
+expect_equal(colnames(Dicionario),c("opcao_cod","opcao_label","opcao_variavel","pergunta_enunciado") )
+expect_equal(sum(is.na(Label)),0)
+expect_equal(sum(is.na(Enunciado)),0)
+expect_equal(sum(is.na(Dicionario)),0)
+#######################Exemplos#################################################
+dados<-PacoteInnovare::Example()[[1]]
+Label<-PacoteInnovare::Example()[[2]]
+Enunciado<-PacoteInnovare::Example()[[3]]
+##Fazendo o tratamento para entrar na função
+#Como tenho dois arquivos, um para o enunciado e outro para o dicionário,
+#usarei a função func_labels
+Dicionario=PacoteInnovare::func_labels(tabela_labels=Label,
+                                       tabela_enunciado=Enunciado,
+                                       col_codigo="codigo",
+                                       col_label="label",
+                                       col_var="variavel",
+                                       col_enunciado="enunciado")
+#Identificando nosso splits
+split_sexo<-Dicionario%>%
+  dplyr::filter(opcao_variavel=="v1")%>%
+  dplyr::select("v1"=opcao_cod,"splits"=opcao_label)
+split_time<-Dicionario%>%
+  dplyr::filter(opcao_variavel=="v17")%>%
+  dplyr::select("v17"=opcao_cod,"splits"=opcao_label)
+split_tipo<-Dicionario%>%
+  dplyr::filter(opcao_variavel=="v19")%>%
+  dplyr::select("v19"=opcao_cod,"splits"=opcao_label)
+#Criando a tabela no formato Nest Tibble dividido pelos splits
+dados_split<-dplyr::bind_rows(
+  #Split por sexo, cujo peso está na v4
+  dados %>%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = v4) %>%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_sexo) %>%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Split por time, cujo peso está na v18
+  dados %>%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = v18) %>%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_time) %>%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Split por tipo (não tem peso)
+  dados %>%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = 1) %>%
+    # Juntar a tabela com os labels dos splits
+    dplyr::left_join(split_tipo) %>%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits),
+  #Adicionando o Geral (não tem peso)
+  dados%>%
+    # Atribuir o peso para a coluna "peso"
+    dplyr::mutate("peso" = 1,splits=as.character("Geral")) %>%
+    # dividir a tabela pelos splits
+    dplyr::group_nest(splits)
+)
+#Calculando a frequência do MRG das variáveis v13 e v14 no split "Geral" com label
+mrg_V13<-function(nome_split,dados_split,pesoo){
+  dadoss<-dados_split[[2]][[which(dados_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_MRG(TABELA=dadoss,
+                             DICIONARIO=Dicionario,
+                             lista_variaveis=list("MRG13"=c("v13","v14")),
+                             adc_labels = TRUE)
+  expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso","v13mrg_label"))
+  expect_equal(a[[1]][["v13mrg_label"]],c("MRG valor 2","MRG valor 1","Total","Base"))
+  expect_equal(a[[1]][["v13mrg"]],c("2","1","Total","Base"))
+
+  n_sem_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==2)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso2<-ifelse(is.na(n_sem_peso2),0,n_sem_peso2)
+  n_sem_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==1)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso1<-ifelse(is.na(n_sem_peso1),0,n_sem_peso1)
+  n_sem_peso12<-n_sem_peso1+n_sem_peso2;n_sem_peso12<-ifelse(is.na(n_sem_peso12),0,n_sem_peso12)
+  n_com_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==2)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso2<-ifelse(is.na(n_com_peso2),0,n_com_peso2)
+  n_com_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==1)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso1<-ifelse(is.na(n_com_peso1),0,n_com_peso1)
+  n_com_peso12<-n_com_peso2+n_com_peso1;n_com_peso12<-ifelse(is.na(n_com_peso12),0,n_com_peso12)
+
+  pct_sem_peso2=n_sem_peso2/n_sem_peso12*100;pct_sem_peso2<-ifelse(is.na(pct_sem_peso2),0,pct_sem_peso2)
+  pct_com_peso2=n_com_peso2/n_com_peso12*100;pct_com_peso2<-ifelse(is.na(pct_com_peso2),0,pct_com_peso2)
+  pct_sem_peso1=n_sem_peso1/n_sem_peso12*100;pct_sem_peso1<-ifelse(is.na(pct_sem_peso1),0,pct_sem_peso1)
+  pct_com_peso1=n_com_peso1/n_com_peso12*100;pct_com_peso1<-ifelse(is.na(pct_com_peso1),0,pct_com_peso1)
+  pct_sem_peso12=pct_sem_peso2+pct_sem_peso1;pct_sem_peso12<-ifelse(is.na(pct_sem_peso12),0,pct_sem_peso12)
+  pct_com_peso12=pct_com_peso2+pct_com_peso1;pct_com_peso12<-ifelse(is.na(pct_com_peso12),0,pct_com_peso12)
+
+  base_sem_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v13) | !is.na(dadoss$v14),1,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_sem_peso<-ifelse(is.na(base_sem_peso),0,base_sem_peso)
+  base_com_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v13) | !is.na(dadoss$v14),peso,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_com_peso<-ifelse(is.na(base_com_peso),0,base_com_peso)
+  pct_base_bem_peso=base_sem_peso/nrow(dadoss)*100;pct_base_bem_peso<-ifelse(is.na(pct_base_bem_peso),0,pct_base_bem_peso)
+  pct_base_com_peso=base_com_peso/dadoss%>%dplyr::summarise(sum(peso,na.rm=TRUE))%>%as.numeric()*100;pct_base_com_peso<-ifelse(is.na(pct_base_com_peso),0,pct_base_com_peso)
+
+  expect_equal(a[[1]][["n"]],c(n_sem_peso2,n_sem_peso1,n_sem_peso12,base_sem_peso))
+  expect_equal(a[[1]][["n_peso"]],c(n_com_peso2,n_com_peso1,n_com_peso12,base_com_peso))
+  expect_equal(a[[1]][["pct"]],c(pct_sem_peso2,pct_sem_peso1,pct_sem_peso12,pct_base_bem_peso))
+  expect_equal(a[[1]][["pct_peso"]],c(pct_com_peso2,pct_com_peso1,pct_com_peso12,pct_base_com_peso))
+}
+mrg_V13_com_codigo_a_mais<-function(nome_split,dados_split,pesoo){
+  dadoss<-dados_split[[2]][[which(dados_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_MRG(TABELA=dadoss,
+                             DICIONARIO=Dicionario,
+                             lista_variaveis=list("MRG13"=c("v13","v14")),
+                             adc_labels = TRUE)
+  expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso","v13mrg_label"))
+  expect_equal(a[[1]][["v13mrg_label"]],c(NA,"MRG valor 2","MRG valor 1","Total","Base"))
+  expect_equal(a[[1]][["v13mrg"]],c("3","2","1","Total","Base"))
+
+  n_sem_peso3<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==3)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso3<-ifelse(is.na(n_sem_peso3),0,n_sem_peso3)
+  n_sem_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==2)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso2<-ifelse(is.na(n_sem_peso2),0,n_sem_peso2)
+  n_sem_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==1)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso1<-ifelse(is.na(n_sem_peso1),0,n_sem_peso1)
+  n_sem_peso123<-n_sem_peso1+n_sem_peso2+n_sem_peso3;n_sem_peso123<-ifelse(is.na(n_sem_peso123),0,n_sem_peso123)
+  n_com_peso3<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==3)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso3<-ifelse(is.na(n_com_peso3),0,n_com_peso3)
+  n_com_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==2)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso2<-ifelse(is.na(n_com_peso2),0,n_com_peso2)
+  n_com_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v13,v14))%>%dplyr::filter(value==1)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso1<-ifelse(is.na(n_com_peso1),0,n_com_peso1)
+  n_com_peso123<-n_com_peso3+n_com_peso2+n_com_peso1;n_com_peso123<-ifelse(is.na(n_com_peso123),0,n_com_peso123)
+
+  pct_sem_peso3=n_sem_peso3/n_sem_peso123*100;pct_sem_peso3<-ifelse(is.na(pct_sem_peso3),0,pct_sem_peso3)
+  pct_com_peso3=n_com_peso3/n_com_peso123*100;pct_com_peso3<-ifelse(is.na(pct_com_peso3),0,pct_com_peso3)
+  pct_sem_peso2=n_sem_peso2/n_sem_peso123*100;pct_sem_peso2<-ifelse(is.na(pct_sem_peso2),0,pct_sem_peso2)
+  pct_com_peso2=n_com_peso2/n_com_peso123*100;pct_com_peso2<-ifelse(is.na(pct_com_peso2),0,pct_com_peso2)
+  pct_sem_peso1=n_sem_peso1/n_sem_peso123*100;pct_sem_peso1<-ifelse(is.na(pct_sem_peso1),0,pct_sem_peso1)
+  pct_com_peso1=n_com_peso1/n_com_peso123*100;pct_com_peso1<-ifelse(is.na(pct_com_peso1),0,pct_com_peso1)
+  pct_sem_peso123=pct_sem_peso3+pct_sem_peso2+pct_sem_peso1;pct_sem_peso123<-ifelse(is.na(pct_sem_peso123),0,pct_sem_peso123)
+  pct_com_peso123=pct_com_peso3+pct_com_peso2+pct_com_peso1;pct_com_peso123<-ifelse(is.na(pct_com_peso123),0,pct_com_peso123)
+
+  base_sem_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v13) | !is.na(dadoss$v14),1,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_sem_peso<-ifelse(is.na(base_sem_peso),0,base_sem_peso)
+  base_com_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v13) | !is.na(dadoss$v14),peso,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_com_peso<-ifelse(is.na(base_com_peso),0,base_com_peso)
+  pct_base_bem_peso=base_sem_peso/nrow(dadoss)*100;pct_base_bem_peso<-ifelse(is.na(pct_base_bem_peso),0,pct_base_bem_peso)
+  pct_base_com_peso=base_com_peso/dadoss%>%dplyr::summarise(sum(peso,na.rm=TRUE))%>%as.numeric()*100;pct_base_com_peso<-ifelse(is.na(pct_base_com_peso),0,pct_base_com_peso)
+
+  expect_equal(a[[1]][["n"]],c(n_sem_peso3,n_sem_peso2,n_sem_peso1,n_sem_peso123,base_sem_peso))
+  expect_equal(a[[1]][["n_peso"]],c(n_com_peso3,n_com_peso2,n_com_peso1,n_com_peso123,base_com_peso))
+  expect_equal(a[[1]][["pct"]],c(pct_sem_peso3,pct_sem_peso2,pct_sem_peso1,pct_sem_peso123,pct_base_bem_peso))
+  expect_equal(a[[1]][["pct_peso"]],c(pct_com_peso3,pct_com_peso2,pct_com_peso1,pct_com_peso123,pct_base_com_peso))
+}
+fazer<-dados_split[[1]]
+#Mundo perfeiro
+for(i in 1:length(fazer)){
+  mrg_V13(nome_split=fazer[[i]],dados_split=dados_split)
+}
+#Alguns NA's
+for(i in 1:length(fazer)){
+  mrg_V13(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. == 2, NA, .))))) )
+  mrg_V13(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. == 2, NA, .)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. == 2, NA, .))))) )
+  mrg_V13(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. %in%c(1,2), NA, .)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. %in%c(1,2), NA, .))))) )
+}
+#Código que não tem no dicionário
+for(i in 1:length(fazer)){
+  mrg_V13_com_codigo_a_mais(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. == 2, 3, .))))) )
+  mrg_V13_com_codigo_a_mais(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. == 2, 3, .)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. == 2, 3, .))))) )
+  mrg_V13_com_codigo_a_mais(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. %in%c(1,2), 3, .)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. %in%c(1,2), 3, .))))) )
+  mrg_V13_com_codigo_a_mais(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. %in%c(1,2), NA, .)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. ==1, 3, NA ))))) )
+  mrg_V13_com_codigo_a_mais(nome_split=fazer[[i]],dados_split=dados_split%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v13", ~ ifelse(. ==1, 3, NA)))))%>%mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v14", ~ ifelse(. ==1, 3, NA ))))) )
+}
+
+
+

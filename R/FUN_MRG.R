@@ -1,21 +1,21 @@
 #' @title Função de Frequência
 #'
-#' @name FUN_isoladas
+#' @name FUN_MRG
 #'
-#' @description Essa função calcula a frequência e a porcentagem das variáveis desejadas.
+#' @description Essa função calcula a frequência e a porcentagem das variáveis MRG. Para executar MRG do tipo citou/não citou, consultar \code{FUN_Citou}.
 #'
 #' @param TABELA Tabela já filtrada pelos splits.
 #' @param DICIONARIO Arquivo com o significado dos labels.
-#' @param variaveis Quais variáveis serão calculadas.
+#' @param lista_variaveis Quais MRG's serão calculados.
 #' @param adc_labels se TRUE (o padrão) retorna uma coluna conteno o label do split.
 #'
 #' @return Se \code{adc_labels=TRUE}, essa função retorna um \code{tibble} contendo 6 colunas:
 #' \itemize{
-#'  \item '\code{variável}': valores possíveis da variável;
-#'  \item \code{n}: número de observações da \code{variaveis};
+#'  \item '\code{lista_variaveis}': valores possíveis da variável;
+#'  \item \code{n}: número de observações da \code{lista_variaveis};
 #'  \item \code{n_peso}: número de observações da \code{variaveis} (com peso aplicado);
-#'  \item \code{pct}: porcentagem da \code{variaveis};
-#'  \item \code{pct_peso}: porcentagem da \code{variaveis} (com peso aplicado);
+#'  \item \code{pct}: porcentagem da \code{lista_variaveis};
+#'  \item \code{pct_peso}: porcentagem da \code{lista_variaveis} (com peso aplicado);
 #'  \item \code{variável_label}: retorna o label do split (só se \code{adc_labels=TRUE}).
 #' }
 #'
@@ -32,6 +32,7 @@
 #'  \itemize{
 #'  \item{\code{Caso você tenha dois arquivos separador, sendo um para os labels e outro para o enunciado, ver func_labels().}}
 #'  }
+#'  \item\code{lista_variaveis}: lista contendo os MRG’s. Todos os MRG’s especificados nesse parâmetro precisam, obrigatoriamente, possuir seu respectivo label no arquivo especificado em \code{DICIONARIO} no formato "primeira variável""mrg". Ex.: mrg=list("G013"=c("v13","v14")) sendo que existe um v13mrg no arquivo especificado em \code{DICIONARIO}).
 #'  }
 #'
 #'}
@@ -97,87 +98,100 @@
 #'     # dividir a tabela pelos splits
 #'     dplyr::group_nest(splits)
 #' )
-#' #Calculando a frequência de "v1" no split "Geral" com label
-#' PacoteInnovare::FUN_isoladas(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
-#'                              DICIONARIO=Dicionario,
-#'                              variaveis="v1",
-#'                              adc_labels = TRUE)
-#' #Calculando a frequência de "v1" e "v2" no split "Feminino" sem label
-#' PacoteInnovare::FUN_isoladas(TABELA=dados_split[[2]][[which(dados_split$splits=="Feminino")]],
-#'                              DICIONARIO=Dicionario,
-#'                              variaveis=c("v1","v2"),
-#'                              adc_labels = FALSE)
+#' #Calculando a frequência do MRG das variáveis v13 e v14 no split "Geral" com label
+#' PacoteInnovare::FUN_MRG(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
+#'                         DICIONARIO=Dicionario,
+#'                         lista_variaveis=list("MRG13"=c("v13","v14")),
+#'                         adc_labels = TRUE)
+#' #Calculando a frequência do MRG das variáveis v13 e v14 no split "Feminino" sem label
+#' PacoteInnovare::FUN_MRG(TABELA=dados_split[[2]][[which(dados_split$splits=="Feminino")]],
+#'                         DICIONARIO=Dicionario,
+#'                         lista_variaveis=list("MRG13"=c("v13","v14")),
+#'                         adc_labels = FALSE)
 #'
 #'
-#' @import tidyverse purrr dplyr stringr tibble
+#' @import tidyverse purrr dplyr stringr tibble tidyr
 #'
 #' @encoding UTF-8
 #' @export
 
 
-FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = TRUE) {
+FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
   Tempo_Inicio<-Sys.time()
   `%nin%` = Negate(`%in%`)
-  out <- vector("list", length = length(variaveis))
-  base <- vector("list", length = length(variaveis))
+
+  out <- vector("list", length = length(lista_variaveis))
+  base <- vector("list", length = length(lista_variaveis))
+  vars_nomes <- lista_variaveis %>% purrr::map_chr(1) %>% stringr::str_replace(., "$|(_\\d+)", "mrg")
 
   # Verificar se cada variável está no dicionário
   for (i in seq_along(out)) {
 
-    if (variaveis[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull())) {
-      warning(stringr::str_c("Variavel ", variaveis[i], " nao presente no dicionario"))
+    if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% pull())) {
+      warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
     }
 
   }
-  if (any(variaveis %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()))) {
-    stop(stringr::str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
+  if (any(vars_nomes %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% pull()))) {
+    stop(str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
   }
 
   # calcular a tabela de frequência
   for (i in seq_along(out)) {
 
-    var <- variaveis[i]
     labels <- DICIONARIO %>%
-      dplyr::filter(opcao_variavel == var) %>%
+      dplyr::filter(opcao_variavel == vars_nomes[i]) %>%
       dplyr::select(opcao_cod, opcao_label) %>%
-      dplyr::rename(!!var := "opcao_cod") %>%
-      dplyr::rename(!!str_c(var, "_label") := "opcao_label") %>%
-      dplyr::mutate(across(var, as.character)) %>%
+      dplyr::rename(!!vars_nomes[i] := "opcao_cod") %>%
+      dplyr::rename(!!str_c(vars_nomes[i], "_label") := "opcao_label") %>%
+      dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
       dplyr::arrange(.[[1]] %in% "-88") %>%
       dplyr::arrange(.[[1]] %in% "-99")
 
     base[[i]] <- TABELA %>%
-      dplyr::select(all_of(var), peso) %>%
-      dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, 1, 0)) %>%
+      dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
+      dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, 1, 0)) %>%
       dplyr::mutate("n_base" = sum(`n_base`)) %>%
       dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
-      dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, peso, 0)) %>%
+      dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, peso, 0)) %>%
       dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
       dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
       dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
 
-    out[[i]] <- TABELA %>%
-      dplyr::select(all_of(var), peso) %>%
-      dplyr::mutate(across(all_of(var), ~ factor(., levels = labels[[1]]))) %>%
-      dplyr::group_by(across(all_of(var)), .drop = FALSE) %>%
+    out[[i]] <-TABELA %>%
+      dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
+      tidyr::pivot_longer(
+        cols = all_of(lista_variaveis[[i]]),
+        names_to = "Variavel",
+        values_to = "Respostas"
+      ) %>%
+      #dplyr::mutate(dplyr::across(all_of("Respostas"), ~ factor(., levels = labels[[1]]))) %>%
+      dplyr::group_by(dplyr::across(all_of("Respostas")), .drop = F) %>%
       dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
       dplyr::filter(!is.na(.[1])) %>%
       dplyr::mutate("pct" = (100 * n / sum(n))) %>%
       dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
-      dplyr::mutate(across(all_of(var), as.character)) %>%
-      purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
-      rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso)) %>%
-      {
-        if (adc_labels) {
-          dplyr::left_join(x = ., y = labels , by = var) %>%
-            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Total", "Total"))) %>%
-            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Base", "Base")))
-        } else {
-          tibble::tibble(.)
-        }
-      }
-    print(paste0(variaveis[i]," [Variavel Simples ",i,"/",length(variaveis),"]"))
+      dplyr::rename_with(
+        .cols = 1,
+        .fn = ~ str_c(lista_variaveis[[i]][[1]], "mrg") %>% str_replace("_\\d+", "")
+      ) %>%
+      dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
+      full_join(labels,by=vars_nomes[i])%>%arrange(desc(.[[vars_nomes[i]]]))%>%
+      purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total")))%>%
+      rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso,"Base"))%>%
+      #{
+      #  if (adc_labels) {
+      #    dplyr::left_join(x = ., y = labels , by = vars_nomes[i]) %>%
+      #      mutate(across(6, ~ replace(., .data[[vars_nomes[i]]] == "Total", "Total"))) %>%
+      #      mutate(across(6, ~ replace(., .data[[vars_nomes[i]]] == "Base", "Base")))
+      #  } else {
+      #    tibble::tibble(.)
+      #  }
+      #}
+      dplyr::mutate(across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
+    print(paste0(names(lista_variaveis)[i]," [Variavel MRG ",i,"/",length(lista_variaveis),"]"))
+
   }
-  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis simples)"))
+  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's)"))
   return(out)
 }
