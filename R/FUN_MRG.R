@@ -123,75 +123,79 @@ FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
   out <- vector("list", length = length(lista_variaveis))
   base <- vector("list", length = length(lista_variaveis))
   vars_nomes <- lista_variaveis %>% purrr::map_chr(1) %>% stringr::str_replace(., "$|(_\\d+)", "mrg")
-
-  # Verificar se cada variável está no dicionário
-  for (i in seq_along(out)) {
-
-    if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% pull())) {
-      warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
-    }
-
-  }
-  if (any(vars_nomes %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% pull()))) {
-    stop(str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
-  }
+  Log_MRG<-list()
 
   # calcular a tabela de frequência
   for (i in seq_along(out)) {
+    #Error
+    erro=0
+    #if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()) ) {
+    #  warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
+    #  if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="nao rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="nao rodou"))  }
+    #  erro<-erro+1
+    #}
 
-    labels <- DICIONARIO %>%
-      dplyr::filter(opcao_variavel == vars_nomes[i]) %>%
-      dplyr::select(opcao_cod, opcao_label) %>%
-      dplyr::rename(!!vars_nomes[i] := "opcao_cod") %>%
-      dplyr::rename(!!str_c(vars_nomes[i], "_label") := "opcao_label") %>%
-      dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
-      dplyr::arrange(.[[1]] %in% "-88") %>%
-      dplyr::arrange(.[[1]] %in% "-99")
+    #Run
+    if(erro==0){
+      labels <- DICIONARIO %>%
+        dplyr::filter(opcao_variavel == vars_nomes[i]) %>%
+        dplyr::select(opcao_cod, opcao_label) %>%
+        dplyr::rename(!!vars_nomes[i] := "opcao_cod") %>%
+        dplyr::rename(!!str_c(vars_nomes[i], "_label") := "opcao_label") %>%
+        dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
+        dplyr::arrange(.[[1]] %in% "-88") %>%
+        dplyr::arrange(.[[1]] %in% "-99")
 
-    base[[i]] <- TABELA %>%
-      dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
-      dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, 1, 0)) %>%
-      dplyr::mutate("n_base" = sum(`n_base`)) %>%
-      dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
-      dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, peso, 0)) %>%
-      dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
-      dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
-      dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
+      base[[i]] <- TABELA %>%
+        dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
+        dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, 1, 0)) %>%
+        dplyr::mutate("n_base" = sum(`n_base`)) %>%
+        dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
+        dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, peso, 0)) %>%
+        dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
+        dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
+        dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
 
-    out[[i]] <-TABELA %>%
-      dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
-      tidyr::pivot_longer(
-        cols = all_of(lista_variaveis[[i]]),
-        names_to = "Variavel",
-        values_to = "Respostas"
-      ) %>%
-      #dplyr::mutate(dplyr::across(all_of("Respostas"), ~ factor(., levels = labels[[1]]))) %>%
-      dplyr::group_by(dplyr::across(all_of("Respostas")), .drop = F) %>%
-      dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
-      dplyr::filter(!is.na(.[1])) %>%
-      dplyr::mutate("pct" = (100 * n / sum(n))) %>%
-      dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
-      dplyr::rename_with(
-        .cols = 1,
-        .fn = ~ str_c(lista_variaveis[[i]][[1]], "mrg") %>% str_replace("_\\d+", "")
-      ) %>%
-      dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
-      full_join(labels,by=vars_nomes[i])%>%arrange(desc(.[[vars_nomes[i]]]))%>%
-      purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total")))%>%
-      rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso,"Base"))%>%
-      #{
-      #  if (adc_labels) {
-      #    dplyr::left_join(x = ., y = labels , by = vars_nomes[i]) %>%
-      #      mutate(across(6, ~ replace(., .data[[vars_nomes[i]]] == "Total", "Total"))) %>%
-      #      mutate(across(6, ~ replace(., .data[[vars_nomes[i]]] == "Base", "Base")))
-      #  } else {
-      #    tibble::tibble(.)
-      #  }
-      #}
-      dplyr::mutate(across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
-    print(paste0(names(lista_variaveis)[i]," [Variavel MRG ",i,"/",length(lista_variaveis),"]"))
+      out[[i]] <-TABELA %>%
+        dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
+        tidyr::pivot_longer(
+          cols = all_of(lista_variaveis[[i]]),
+          names_to = "Variavel",
+          values_to = "Respostas"
+        ) %>%
+        #dplyr::mutate(dplyr::across(all_of("Respostas"), ~ factor(., levels = labels[[1]]))) %>%
+        dplyr::group_by(dplyr::across(all_of("Respostas")), .drop = F) %>%
+        dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
+        dplyr::filter(!is.na(.[1])) %>%
+        dplyr::mutate("pct" = (100 * n / sum(n))) %>%
+        dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
+        dplyr::rename_with(
+          .cols = 1,
+          .fn = ~ str_c(lista_variaveis[[i]][[1]], "mrg") %>% str_replace("_\\d+", "")
+        ) %>%
+        dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
+        full_join(labels,by=vars_nomes[i])%>%arrange(desc(.[[vars_nomes[i]]]))%>%
+        purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total")))%>%
+        rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso,"Base"))%>%
+        dplyr::mutate(across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
+      print(paste0(names(lista_variaveis)[i]," [Variavel MRG ",i,"/",length(lista_variaveis),"]"))
+
+      if(any(is.na(out[[i]]%>%dplyr::pull(6)))){
+
+        if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()) ) {
+          warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
+          if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="rodou"))  }
+        }else{
+          msg=str_c("Variavel ", vars_nomes[i], " possui label nao presente no dicionario. Codigo(s) [",paste(as.character(out[[i]][which(is.na(out[[i]][,6])),1]%>%dplyr::pull()),collapse = ","),"]")
+          warning(msg)
+          if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou"))  }
+        }
+
+      }
+    }
 
   }
+
   print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's)"))
-  return(out)
+  return(list(Resultado=out,Log_MRG=Log_MRG))
 }
