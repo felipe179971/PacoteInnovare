@@ -129,11 +129,6 @@ FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
   for (i in seq_along(out)) {
     #Error
     erro=0
-    #if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()) ) {
-    #  warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
-    #  if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="nao rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="nao rodou"))  }
-    #  erro<-erro+1
-    #}
 
     #Run
     if(erro==0){
@@ -192,10 +187,13 @@ FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
         }
 
       }
+
+      if(adc_labels==FALSE){out[[i]]<-out[[i]]%>%dplyr::select(-ncol(.))}
+
     }
 
   }
 
   print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's)"))
-  return(list(Resultado=out,Log_MRG=Log_MRG))
+  return(list(Resultado_MRG=out,Log_MRG=Log_MRG))
 }

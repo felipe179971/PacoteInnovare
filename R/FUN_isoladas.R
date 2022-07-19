@@ -120,64 +120,71 @@ FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = TRUE) {
   `%nin%` = Negate(`%in%`)
   out <- vector("list", length = length(variaveis))
   base <- vector("list", length = length(variaveis))
+  Log_isoladas<-list()
 
-  # Verificar se cada variável está no dicionário
-  for (i in seq_along(out)) {
+  #Error
+  erro=0
 
-    if (variaveis[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull())) {
-      warning(stringr::str_c("Variavel ", variaveis[i], " nao presente no dicionario"))
+  #Run
+  if(erro==0){
+    # calcular a tabela de frequência
+    for (i in seq_along(out)) {
+
+      var <- variaveis[i]
+      labels <- DICIONARIO %>%
+        dplyr::filter(opcao_variavel == var) %>%
+        dplyr::select(opcao_cod, opcao_label) %>%
+        dplyr::rename(!!var := "opcao_cod") %>%
+        dplyr::rename(!!str_c(var, "_label") := "opcao_label") %>%
+        dplyr::mutate(across(var, as.character)) %>%
+        dplyr::arrange(.[[1]] %in% "-88") %>%
+        dplyr::arrange(.[[1]] %in% "-99")
+
+      base[[i]] <- TABELA %>%
+        dplyr::select(all_of(var), peso) %>%
+        dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, 1, 0)) %>%
+        dplyr::mutate("n_base" = sum(`n_base`)) %>%
+        dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
+        dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, peso, 0)) %>%
+        dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
+        dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
+        dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
+
+      out[[i]] <- TABELA %>%
+        dplyr::select(all_of(var), peso) %>%
+        #dplyr::mutate(across(all_of(var), ~ factor(., levels = labels[[1]]))) %>%
+        dplyr::group_by(across(all_of(var)), .drop = FALSE) %>%
+        dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
+        dplyr::filter(!is.na(.[1])) %>%
+        dplyr::mutate("pct" = (100 * n / sum(n))) %>%
+        dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
+        dplyr::mutate(across(all_of(var), as.character)) %>%
+        full_join(labels,by=var)%>%arrange(desc(.[[var]]))%>%
+        purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
+        rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso,"Base")) %>%
+        dplyr::mutate(across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
+      print(paste0(var," [Variavel Simples ",i,"/",length(variaveis),"]"))
+
+      if(any(is.na(out[[i]]%>%dplyr::pull(6)))){
+
+        if (var %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()) ) {
+          warning(str_c("Variavel ", var, " nao presente no dicionario"))
+          if(length(Log_isoladas)==0){Log_isoladas[[1]]<-tibble::tibble(Variavel=var,`Problema`=str_c("Variavel ", var, " nao presente no dicionario"),Status="rodou")}else{Log_isoladas[[1]]<-dplyr::bind_rows(Log_isoladas[[1]],tibble::tibble(Variavel=var,`Problema`=str_c("Variavel ", var, " nao presente no dicionario"),Status="rodou"))  }
+        }else{
+          msg=str_c("Variavel ", var, " possui label nao presente no dicionario. Codigo(s) [",paste(as.character(out[[i]][which(is.na(out[[i]][,6])),1]%>%dplyr::pull()),collapse = ","),"]")
+          warning(msg)
+          if(length(Log_isoladas)==0){Log_isoladas[[1]]<-tibble::tibble(Variavel=var,`Problema`=msg,Status="rodou")}else{Log_isoladas[[1]]<-dplyr::bind_rows(Log_isoladas[[1]],tibble::tibble(Variavel=var,`Problema`=msg,Status="rodou"))  }
+        }
+
+      }
+
+      if(adc_labels==FALSE){out[[i]]<-out[[i]]%>%dplyr::select(-ncol(.))}
+
     }
 
   }
-  if (any(variaveis %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()))) {
-    stop(stringr::str_c("Parando a funcao. Variaveis nao presentes no dicionario"))
-  }
 
-  # calcular a tabela de frequência
-  for (i in seq_along(out)) {
 
-    var <- variaveis[i]
-    labels <- DICIONARIO %>%
-      dplyr::filter(opcao_variavel == var) %>%
-      dplyr::select(opcao_cod, opcao_label) %>%
-      dplyr::rename(!!var := "opcao_cod") %>%
-      dplyr::rename(!!str_c(var, "_label") := "opcao_label") %>%
-      dplyr::mutate(across(var, as.character)) %>%
-      dplyr::arrange(.[[1]] %in% "-88") %>%
-      dplyr::arrange(.[[1]] %in% "-99")
-
-    base[[i]] <- TABELA %>%
-      dplyr::select(all_of(var), peso) %>%
-      dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, 1, 0)) %>%
-      dplyr::mutate("n_base" = sum(`n_base`)) %>%
-      dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
-      dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(across(all_of(var)))) > 0, peso, 0)) %>%
-      dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
-      dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
-      dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
-
-    out[[i]] <- TABELA %>%
-      dplyr::select(all_of(var), peso) %>%
-      dplyr::mutate(across(all_of(var), ~ factor(., levels = labels[[1]]))) %>%
-      dplyr::group_by(across(all_of(var)), .drop = FALSE) %>%
-      dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
-      dplyr::filter(!is.na(.[1])) %>%
-      dplyr::mutate("pct" = (100 * n / sum(n))) %>%
-      dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
-      dplyr::mutate(across(all_of(var), as.character)) %>%
-      purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
-      rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso)) %>%
-      {
-        if (adc_labels) {
-          dplyr::left_join(x = ., y = labels , by = var) %>%
-            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Total", "Total"))) %>%
-            dplyr::mutate(across(6, ~ replace(., .data[[var]] == "Base", "Base")))
-        } else {
-          tibble::tibble(.)
-        }
-      }
-    print(paste0(variaveis[i]," [Variavel Simples ",i,"/",length(variaveis),"]"))
-  }
   print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis simples)"))
-  return(out)
+  return(list(Resultado_isoladas=out,Log_isoladas=Log_isoladas))
 }
