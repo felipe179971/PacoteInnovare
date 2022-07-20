@@ -1,8 +1,10 @@
 #' @title Função de Frequência
 #'
-#' @name FUN_MRG
+#' @name FUN_Citou
 #'
-#' @description Essa função calcula a frequência e a porcentagem das variáveis MRG. Para executar MRG do tipo citou/não citou, consultar \code{FUN_Citou}.
+#' @description Essa função calcula a frequência e a porcentagem das variáveis MRG do tipo citou/não citou (código 1). Para executar outro tipo de MRG, consultar, consultar \code{FUN_MRG}.
+#'
+#' Importante salientar que todo e qualquer código que não seja 1 será tratado como "não/não citou". Sendo, inclusive, utilizado para o calculo da base.
 #'
 #' @param TABELA Tabela já filtrada pelos splits.
 #' @param DICIONARIO Arquivo com o significado dos labels.
@@ -32,7 +34,7 @@
 #'  \itemize{
 #'  \item{\code{Caso você tenha dois arquivos separador, sendo um para os labels e outro para o enunciado, ver func_labels().}}
 #'  }
-#'  \item\code{lista_variaveis}: lista contendo os MRG’s. Todos os MRG’s especificados nesse parâmetro precisam, obrigatoriamente, possuir seu respectivo label no arquivo especificado em \code{DICIONARIO} no formato "primeira variável""mrg". Ex.: mrg=list("G013"=c("v13","v14")) sendo que existe um v13mrg no arquivo especificado em \code{DICIONARIO}).
+#'  \item\code{lista_variaveis}: lista contendo os MRG’s. Todos os MRG’s especificados nesse parâmetro precisam, obrigatoriamente, possuir seu respectivo label no arquivo especificado em \code{DICIONARIO} em respostar binárias (citou/não citou; sim/não...).
 #'  }
 #'
 #'}
@@ -98,16 +100,21 @@
 #'     # dividir a tabela pelos splits
 #'     dplyr::group_nest(splits)
 #' )
-#' #Calculando a frequência do MRG das variáveis v13 e v14 no split "Geral" com label
-#' PacoteInnovare::FUN_MRG(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
-#'                         DICIONARIO=Dicionario,
-#'                         lista_variaveis=list("MRG13"=c("v13","v14")),
-#'                         adc_labels = TRUE)
-#' #Calculando a frequência do MRG das variáveis v13 e v14 no split "Feminino" sem label
-#' PacoteInnovare::FUN_MRG(TABELA=dados_split[[2]][[which(dados_split$splits=="Feminino")]],
-#'                         DICIONARIO=Dicionario,
-#'                         lista_variaveis=list("MRG13"=c("v13","v14")),
-#'                         adc_labels = FALSE)
+#' #Calculando a frequência do MRG no split "Geral" com label
+#' PacoteInnovare::FUN_Citou(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
+#'                           DICIONARIO=Dicionario,
+#'                           lista_variaveis=list("MRG5"=c("v5","v6"),
+#'                                           "MRG7"=c("v7","v8"),
+#'                                           "MRG9"=c("v9","v10","v11","v12")),
+#'                           adc_labels = TRUE)
+#' #Calculando a frequência do MRG no split "Feminino" sem label
+#' PacoteInnovare::FUN_Citou(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
+#'                           DICIONARIO=Dicionario,
+#'                           lista_variaveis=list("MRG5"=c("v5","v6"),
+#'                                            "MRG7"=c("v7","v8"),
+#'                                            "MRG9"=c("v9","v10","v11","v12")),
+#'                           adc_labels = FALSE)
+#'
 #'
 #'
 #' @import tidyverse purrr dplyr stringr tibble tidyr
@@ -116,89 +123,88 @@
 #' @export
 
 
-FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
+FUN_Citou <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
   Tempo_Inicio<-Sys.time()
   `%nin%` = Negate(`%in%`)
 
+
   out <- vector("list", length = length(lista_variaveis))
   base <- vector("list", length = length(lista_variaveis))
-  vars_nomes <- lista_variaveis %>% purrr::map_chr(1) %>% stringr::str_replace(., "$|(_\\d+)", "mrg")
-  Log_MRG<-list()
+  vars_nomes <- lista_variaveis %>% map_chr(1) %>% str_replace(., "$|(_\\d+)", "mrg")
+  Log_citou<-list()
+
 
   # calcular a tabela de frequência
   for (i in seq_along(out)) {
     #Error
     erro=0
-
     #Run
     if(erro==0){
       labels <- DICIONARIO %>%
-        dplyr::filter(opcao_variavel == vars_nomes[i]) %>%
-        dplyr::select(opcao_cod, opcao_label) %>%
-        dplyr::rename(!!vars_nomes[i] := "opcao_cod") %>%
-        dplyr::rename(!!str_c(vars_nomes[i], "_label") := "opcao_label") %>%
-        dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
-        dplyr::arrange(.[[1]] %in% "-88") %>%
-        dplyr::arrange(.[[1]] %in% "-99")
+        dplyr::filter(opcao_variavel %in% lista_variaveis[[i]]) %>%
+        dplyr::filter(opcao_cod == 1) %>%
+        dplyr::select(opcao_variavel, pergunta_enunciado) %>%
+        dplyr::rename(!!vars_nomes[i] := "opcao_variavel") %>%
+        dplyr::rename(!!stringr::str_c(vars_nomes[i], "_label") := "pergunta_enunciado")
 
       base[[i]] <- TABELA %>%
-        dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
-        dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, 1, 0)) %>%
+        dplyr::select(dplyr::all_of(lista_variaveis[[i]]), peso) %>%
+        dplyr::mutate("n_base" = ifelse(test = rowSums(!is.na(dplyr::across(dplyr::all_of(lista_variaveis[[i]])))) > 0, 1, 0)) %>%
         dplyr::mutate("n_base" = sum(`n_base`)) %>%
         dplyr::mutate("pct_base" = (100 * `n_base`) / nrow(.)) %>%
-        dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(dplyr::across(all_of(lista_variaveis[[i]])))) > 0, peso, 0)) %>%
+        dplyr::mutate("n_base_peso" = ifelse(test = rowSums(!is.na(dplyr::across(dplyr::all_of(lista_variaveis[[i]])))) > 0, peso, 0)) %>%
         dplyr::mutate("n_base_peso" = sum(`n_base_peso`)) %>%
         dplyr::mutate("pct_base_peso" = (100 * `n_base_peso`) / sum(peso)) %>%
         dplyr::distinct(n_base, pct_base, n_base_peso, pct_base_peso)
 
-      out[[i]] <-TABELA %>%
-        dplyr::select(all_of(lista_variaveis[[i]]), peso) %>%
+      out[[i]] <- TABELA %>%
+        dplyr::select(dplyr::all_of(lista_variaveis[[i]]), peso) %>%
         tidyr::pivot_longer(
-          cols = all_of(lista_variaveis[[i]]),
+          cols = dplyr::all_of(lista_variaveis[[i]]),
           names_to = "Variavel",
           values_to = "Respostas"
         ) %>%
-        #dplyr::mutate(dplyr::across(all_of("Respostas"), ~ factor(., levels = labels[[1]]))) %>%
-        dplyr::group_by(dplyr::across(all_of("Respostas")), .drop = F) %>%
+        dplyr::filter(Respostas == 1) %>%
+        dplyr::mutate(dplyr::across(dplyr::all_of("Variavel"), ~ factor(., levels = labels[[1]]))) %>%
+        dplyr::group_by(dplyr::across(dplyr::all_of("Variavel")), .drop = F) %>%
         dplyr::summarise("n" = n(), "n_peso" = sum(peso), .groups = "drop") %>%
-        dplyr::filter(!is.na(.[1])) %>%
         dplyr::mutate("pct" = (100 * n / sum(n))) %>%
         dplyr::mutate("pct_peso" = (100 * n_peso / sum(n_peso))) %>%
         dplyr::rename_with(
           .cols = 1,
-          .fn = ~ str_c(lista_variaveis[[i]][[1]], "mrg") %>% str_replace("_\\d+", "")
+          .fn = ~ stringr::str_c(lista_variaveis[[i]][[1]], "mrg") %>% stringr::str_replace("_\\d+", "")
         ) %>%
-        dplyr::mutate(dplyr::across(vars_nomes[i], as.character)) %>%
-        full_join(labels,by=vars_nomes[i])%>%arrange(desc(.[[vars_nomes[i]]]))%>%
-        purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total")))%>%
-        rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso,"Base"))%>%
-        dplyr::mutate(across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
-      print(paste0(names(lista_variaveis)[i]," [Variavel MRG ",i,"/",length(lista_variaveis),"]"))
+        dplyr::mutate(across(vars_nomes[i], as.character)) %>%
+        purrr::map_df(.f = ~ c(., ifelse(is.numeric(.), sum(., na.rm = TRUE), "Total"))) %>%
+        rbind(list("Base", base[[i]]$n_base, base[[i]]$n_base_peso, base[[i]]$pct_base, base[[i]]$pct_base_peso)) %>%
+        dplyr::left_join(x = ., y = labels , by = vars_nomes[i]) %>%
+        dplyr::mutate(dplyr::across(6, ~ replace(., .data[[vars_nomes[i]]] == "Total", "Total"))) %>%
+        dplyr::mutate(dplyr::across(6, ~ replace(., .data[[vars_nomes[i]]] == "Base", "Base")))%>%
+        dplyr::mutate(dplyr::across(.cols=c("n","n_peso","pct","pct_peso"),~ifelse(is.na(.x),0,.x)))
+      print(paste0(names(lista_variaveis)[i]," [Variavel MRG Citou ",i,"/",length(lista_variaveis),"]"))
 
-      if(any(is.na(out[[i]]%>%dplyr::pull(6)))){
-
-        if (vars_nomes[i] %nin% c(DICIONARIO %>% dplyr::distinct(opcao_variavel) %>% dplyr::pull()) ) {
-          warning(str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"))
-          if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=str_c("Variavel ", vars_nomes[i], " nao presente no dicionario"),Status="rodou"))  }
-        }else{
-          msg=str_c("Variavel ", vars_nomes[i], " possui label nao presente no dicionario. Codigo(s) [",paste(as.character(out[[i]][which(is.na(out[[i]][,6])),1]%>%dplyr::pull()),collapse = ","),"]")
-          warning(msg)
-          if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou")}else{Log_MRG[[1]]<-dplyr::bind_rows(Log_MRG[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou"))  }
-        }
-
+      #Verificando valor a mais em TABELA (que não seja 1 nem 2)
+      values_TABELA<-TABELA%>%dplyr::select(dplyr::all_of(lista_variaveis[[i]]))%>%tidyr::pivot_longer(cols=dplyr::all_of(lista_variaveis[[i]]))%>%dplyr::mutate(value=as.factor(value))%>%dplyr::select(value)%>%dplyr::summarise(levels(value))%>%dplyr::pull()
+      if(any(values_TABELA%nin%c("1","2")) ){
+       msg=stringr::str_c("Variavel ", vars_nomes[i], ": codigo a mais encontrado em TABELA. Codigo [",paste(values_TABELA[which(values_TABELA%nin%c("1","2"))],collapse = ","),"] foi tratado como nao/nao citou")
+        warning(msg)
+        if(length(Log_citou)==0){Log_citou[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou")}else{Log_citou[[1]]<-dplyr::bind_rows(Log_citou[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou"))  }
       }
-
+      #Verificar se todas as variáveis possuem enunciado
+      if(any(is.na(out[[i]]%>%dplyr::pull(6)))){
+       msg=stringr::str_c("Variavel ", vars_nomes[i], " possui label nao presente no dicionario. Enuncaiado(s) [",paste(out[[i]][which(is.na(out[[i]][[stringr::str_c(vars_nomes[i], "_label")]])),1]%>%dplyr::first(),collapse = ","),"] ausente(s).")
+       warning(msg)
+       if(length(Log_citou)==0){Log_citou[[1]]<-tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou")}else{Log_citou[[1]]<-dplyr::bind_rows(Log_citou[[1]],tibble::tibble(Variavel=vars_nomes[i],`Problema`=msg,Status="rodou"))  }
+      }
       if(adc_labels==FALSE){out[[i]]<-out[[i]]%>%dplyr::select(-ncol(.))}
-
-    }
-
+    }#end error
   }
 
-  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's)"))
+  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's citou/nao citou)"))
 
   #Se tenho nenhum warning, criar o tibble composto só por NA
-  if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
+  if(length(Log_citou)==0){Log_citou[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
 
 
-  return(list(Resultado_MRG=out,Log_MRG=Log_MRG))
+  return(list(Resultado_Citou=out,Log_citou=Log_citou))
 }

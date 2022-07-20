@@ -9,16 +9,16 @@
 #' @param end Tempo final.
 #' @param start Tempo inicial.
 #'
-#' @return Retorna o texto \code{X horas, Y minutos e Z segundos}:
+#' @return Retorna o texto \code{X:Y:Z} que significa \code{X horas, Y minutos e Z segundos}:
 #'
 #' @author Felipe Ferreira \email{felipe179971@hotmail.com} e Rafael Peixoto \email{peixoto.rafael@outlook.com}.
 #'
 #' @examples
-#' Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03")
-#' Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03")
-#' Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03")
-#' Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03")
-#' Time_Difference(Sys.time(),"2022-07-15 17:00:53 -03")
+#' PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03")
+#' PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03")
+#' PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03")
+#' PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03")
+#' PacoteInnovare::Time_Difference(Sys.time(),"2022-07-15 17:00:53 -03")
 #'
 #' @import stringr
 #'
@@ -29,7 +29,9 @@ Time_Difference<-function(end,start){
   dif=difftime(end, start, units = "secs")[[1]]
   horas=(dif/60)/60
   if(stringr::str_detect(horas,"[.]")){minutos=as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(horas,1)),"[.]") ))*60}else{minutos=0}
-  if(stringr::str_detect(minutos,"[.]")){segundos=as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(minutos,1)),"[.]") ))*60}else{segundos=0};if(horas==0 & minutos==0){segundos=dif}
-  return(paste(trunc(horas),"horas,",trunc(minutos),"minutos e",segundos,"segundos"))
+  if(stringr::str_detect(minutos,"[.]")){segundos=ceiling(as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(minutos,1)),"[.]") ))*60)}else{segundos=0}#;if(horas==0 & minutos==0){segundos=ceiling(dif)}
+  #segundos<-ifelse(round(segundos)<=0,1,round(segundos))
+  return(paste0(trunc(horas),":",trunc(minutos),":",segundos))
 }
 
+#Time_Difference(end="2022-07-14 17:00:53 -03",start="2022-07-14 16:00:53 -03")

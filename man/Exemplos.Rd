@@ -14,7 +14,7 @@ Time_Difference(end, start)
 \item{start}{Tempo inicial.}
 }
 \value{
-Retorna o texto \code{X horas, Y minutos e Z segundos}:
+Retorna o texto \code{X:Y:Z} que significa \code{X horas, Y minutos e Z segundos}:
 }
 \description{
 Calcula a diferença entre dois vetores do tipo \code{Sys.time}.
@@ -22,11 +22,11 @@ Normalmente utilizada para avaliar o tempo de execução das demais funções do
 \code{PaceteInnovare}, é internalizada em diversas funções do pacote mas pode ser utilizada livremente.
 }
 \examples{
-Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03")
-Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03")
-Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03")
-Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03")
-Time_Difference(Sys.time(),"2022-07-15 17:00:53 -03")
+PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03")
+PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03")
+PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03")
+PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03")
+PacoteInnovare::Time_Difference(Sys.time(),"2022-07-15 17:00:53 -03")
 
 }
 \author{

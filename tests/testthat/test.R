@@ -54,13 +54,13 @@ Label<-Label%>%dplyr::rename(opcao_variavel="variavel",opcao_cod="codigo",opcao_
 #Executando#########################################
 #Testando se faz a frequencia
 a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = FALSE)
-testthat::expect_equal(length(a[[2]]),0)
+testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
 a<-a[[1]]%>%data.frame()
 testthat::expect_equal(nrow(a),4);testthat::expect_equal(ncol(a),5);testthat::expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso"))
 testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a[,2],c(51,49,100,100));testthat::expect_equal(a[,3],c(50,50,100,100));testthat::expect_equal(a[,4],c(51,49,100,100));testthat::expect_equal(a[,5],c(50,50,100,100))
 #Testando o parâmetro adc_labels
 a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = TRUE)
-testthat::expect_equal(length(a[[2]]),0)
+testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
 a<-a[[1]]%>%data.frame()
 testthat::expect_equal(nrow(a),4);testthat::expect_equal(ncol(a),6);testthat::expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso","v1_label"))
 testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a[,2],c(51,49,100,100));testthat::expect_equal(a[,3],c(50,50,100,100));testthat::expect_equal(a[,4],c(51,49,100,100));testthat::expect_equal(a[,5],c(50,50,100,100));testthat::expect_equal(a[,6],c("Feminino","Masculino","Total","Base"))
@@ -68,10 +68,11 @@ testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a
 rm(a,dados,dados_peso,Dados_splits,Label,splits,n,v1,v2,v3,v4)%>%suppressWarnings()
 
 ###################Time_Difference##############################################
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03"),"1 horas, 0 minutos e 0 segundos")
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03"),"1 horas, 0 minutos e 52.999999999992 segundos")
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03"),"0 horas, 10 minutos e 0 segundos")
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03"),"-23 horas, 23 minutos e 12.999999999984 segundos")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03"),"1:0:0")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03"),"1:0:53")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03"),"0:10:0")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03"),"-23:23:13")
+
 #######################func_labels##############################################
 Label<-PacoteInnovare::Example()[[2]]
 Enunciado<-PacoteInnovare::Example()[[3]]
@@ -151,7 +152,7 @@ mrg_V13<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              lista_variaveis=list("MRG13"=c("v13","v14")),
                              adc_labels = TRUE)
-  testthat::expect_equal(length(a[[2]]),0)
+  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso","v13mrg_label"))
@@ -188,7 +189,7 @@ mrg_V13<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              lista_variaveis=list("MRG13"=c("v13","v14")),
                              adc_labels = FALSE)
-  testthat::expect_equal(length(a[[2]]),0)
+  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso"))
@@ -385,7 +386,7 @@ isolada_V13<-function(nome_split,dadoss_split,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              variaveis=c("v13"),
                              adc_labels = TRUE)
-  testthat::expect_equal(length(a[[2]]),0)
+  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13","n","n_peso","pct","pct_peso","v13_label"))
@@ -429,7 +430,7 @@ isolada_V13_com_codigo_a_mais<-function(nome_split,dadoss_split,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              variaveis=c("v13"),
                              adc_labels = TRUE)
-  if(all(is.na(dadoss$v13))){testthat::expect_equal(length(a[[2]]),0)}else{testthat::expect_equal(length(a[[2]]),1)}
+  if(all(is.na(dadoss$v13))){testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
 
   a<-a[[1]]
 
@@ -471,7 +472,7 @@ isolada_V13_com_codigo_a_mais<-function(nome_split,dadoss_split,Dicionarioo){
                                   DICIONARIO=Dicionarioo,
                                   variaveis=c("v13"),
                                   adc_labels = FALSE)
-  if(all(is.na(dadoss$v13))){testthat::expect_equal(length(a[[2]]),0)}else{testthat::expect_equal(length(a[[2]]),1)}
+  if(all(is.na(dadoss$v13))){testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
   a<-a[[1]]
   testthat::expect_equal(colnames(a[[1]]),c("v13","n","n_peso","pct","pct_peso"))
 
@@ -525,3 +526,221 @@ for(i in sample(1:length(fazer),5,replace = FALSE)){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################################CITOU######################################
+mrg_citou<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
+  dadoss<-dadoss_split[[2]][[which(dadoss_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                             DICIONARIO=Dicionarioo,
+                             lista_variaveis=list("MRG5"=c("v5","v6")),
+                             adc_labels = TRUE)
+  levels=dadoss%>%dplyr::select(v5,v6)%>%pivot_longer(cols=c(v5,v6))%>%mutate(value=as.factor(value))%>%select(value)%>%summarise(levels(value))%>%pull
+
+  if(length(levels)==2){
+    if(length(levels)%in%c(1,2)){
+      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
+    }
+  }
+  if(length(levels)==3){
+    if(all(levels%in%c("1","3","4"))){testthat::expect_equal(as.character(a[[2]][[1]]["Problema"]),"Variavel v5mrg: codigo a mais encontrado em TABELA. Codigo [3,4] foi tratado como nao/nao citou") }
+    if(all(levels%in%c("1","2","3"))){testthat::expect_equal(as.character(a[[2]][[1]]["Problema"]),"Variavel v5mrg: codigo a mais encontrado em TABELA. Codigo [3] foi tratado como nao/nao citou") }
+  }
+
+
+  #print(a)
+  a<-a[[1]]
+  testthat::expect_equal(colnames(a[[1]]),c("v5mrg","n","n_peso","pct","pct_peso","v5mrg_label"))
+  testthat::expect_equal(a[[1]][["v5mrg_label"]],c("Enunciado v5","Enunciado v6","Total","Base"))
+  testthat::expect_equal(a[[1]][["v5mrg"]],c("v5","v6","Total","Base"))
+
+  n_sem_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v5))%>%dplyr::filter(value==1)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso2<-ifelse(is.na(n_sem_peso2),0,n_sem_peso2)
+  n_sem_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v6))%>%dplyr::filter(value==1)%>%dplyr::count(value,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_sem_peso1<-ifelse(is.na(n_sem_peso1),0,n_sem_peso1)
+  n_sem_peso12<-n_sem_peso1+n_sem_peso2;n_sem_peso12<-ifelse(is.na(n_sem_peso12),0,n_sem_peso12)
+  n_com_peso2<-dadoss%>%tidyr::pivot_longer(cols=c(v5))%>%dplyr::filter(value==1)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso2<-ifelse(is.na(n_com_peso2),0,n_com_peso2)
+  n_com_peso1<-dadoss%>%tidyr::pivot_longer(cols=c(v6))%>%dplyr::filter(value==1)%>%dplyr::count(value,wt=peso,na.rm=TRUE)%>%dplyr::select(n)%>%as.numeric();n_com_peso1<-ifelse(is.na(n_com_peso1),0,n_com_peso1)
+  n_com_peso12<-n_com_peso2+n_com_peso1;n_com_peso12<-ifelse(is.na(n_com_peso12),0,n_com_peso12)
+
+  pct_sem_peso2=n_sem_peso2/n_sem_peso12*100;pct_sem_peso2<-ifelse(is.na(pct_sem_peso2),0,pct_sem_peso2)
+  pct_com_peso2=n_com_peso2/n_com_peso12*100;pct_com_peso2<-ifelse(is.na(pct_com_peso2),0,pct_com_peso2)
+  pct_sem_peso1=n_sem_peso1/n_sem_peso12*100;pct_sem_peso1<-ifelse(is.na(pct_sem_peso1),0,pct_sem_peso1)
+  pct_com_peso1=n_com_peso1/n_com_peso12*100;pct_com_peso1<-ifelse(is.na(pct_com_peso1),0,pct_com_peso1)
+  pct_sem_peso12=pct_sem_peso2+pct_sem_peso1;pct_sem_peso12<-ifelse(is.na(pct_sem_peso12),0,pct_sem_peso12)
+  pct_com_peso12=pct_com_peso2+pct_com_peso1;pct_com_peso12<-ifelse(is.na(pct_com_peso12),0,pct_com_peso12)
+
+  base_sem_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v5) | !is.na(dadoss$v6),1,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_sem_peso<-ifelse(is.na(base_sem_peso),0,base_sem_peso)
+  base_com_peso<-dadoss%>%dplyr::mutate(base=ifelse(!is.na(dadoss$v5) | !is.na(dadoss$v6),peso,NA))%>%dplyr::summarise(n=sum(base,na.rm=TRUE))%>%dplyr::select(n)%>%as.numeric();base_com_peso<-ifelse(is.na(base_com_peso),0,base_com_peso)
+  pct_base_bem_peso=base_sem_peso/nrow(dadoss)*100;pct_base_bem_peso<-ifelse(is.na(pct_base_bem_peso),0,pct_base_bem_peso)
+  pct_base_com_peso=base_com_peso/dadoss%>%dplyr::summarise(sum(peso,na.rm=TRUE))%>%as.numeric()*100;pct_base_com_peso<-ifelse(is.na(pct_base_com_peso),0,pct_base_com_peso)
+
+  testthat::expect_equal(a[[1]][["n"]],c(n_sem_peso2,n_sem_peso1,n_sem_peso12,base_sem_peso))
+  testthat::expect_equal(a[[1]][["n_peso"]],c(n_com_peso2,n_com_peso1,n_com_peso12,base_com_peso))
+  testthat::expect_equal(a[[1]][["pct"]],c(pct_sem_peso2,pct_sem_peso1,pct_sem_peso12,pct_base_bem_peso))
+  testthat::expect_equal(a[[1]][["pct_peso"]],c(pct_com_peso2,pct_com_peso1,pct_com_peso12,pct_base_com_peso))
+
+
+  dadoss<-dadoss_split[[2]][[which(dadoss_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                               DICIONARIO=Dicionarioo,
+                               lista_variaveis=list("MRG5"=c("v5","v6")),
+                               adc_labels = FALSE)
+
+  levels=dadoss%>%dplyr::select(v5,v6)%>%pivot_longer(cols=c(v5,v6))%>%mutate(value=as.factor(value))%>%select(value)%>%summarise(levels(value))%>%pull
+  if(length(levels)==2){
+    if(length(levels)%in%c(1,2)){
+      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
+    }
+  }
+  if(length(levels)==3){
+    if(all(levels%in%c("1","3","4"))){testthat::expect_equal(as.character(a[[2]][[1]]["Problema"]),"Variavel v5mrg: codigo a mais encontrado em TABELA. Codigo [3,4] foi tratado como nao/nao citou") }
+    if(all(levels%in%c("1","2","3"))){testthat::expect_equal(as.character(a[[2]][[1]]["Problema"]),"Variavel v5mrg: codigo a mais encontrado em TABELA. Codigo [3] foi tratado como nao/nao citou") }
+  }
+  a<-a[[1]]
+
+  testthat::expect_equal(colnames(a[[1]]),c("v5mrg","n","n_peso","pct","pct_peso"))
+  testthat::expect_equal(a[[1]][["v5mrg"]],c("v5","v6","Total","Base"))
+
+  testthat::expect_equal(a[[1]][["n"]],c(n_sem_peso2,n_sem_peso1,n_sem_peso12,base_sem_peso))
+  testthat::expect_equal(a[[1]][["n_peso"]],c(n_com_peso2,n_com_peso1,n_com_peso12,base_com_peso))
+  testthat::expect_equal(a[[1]][["pct"]],c(pct_sem_peso2,pct_sem_peso1,pct_sem_peso12,pct_base_bem_peso))
+  testthat::expect_equal(a[[1]][["pct_peso"]],c(pct_com_peso2,pct_com_peso1,pct_com_peso12,pct_base_com_peso))
+
+}
+fazer<-dados_split[[1]]
+#Mundo perfeiro
+for(i in sample(1:length(fazer),3,replace = FALSE) ){
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split,Dicionarioo=Dicionario)
+}
+for(i in sample(1:length(fazer),3,replace = FALSE)){
+  #Alguns NA's
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 2, NA, .))))),Dicionarioo=Dicionario)
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 1, NA, .))))),Dicionarioo=Dicionario)
+
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 2, NA, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. == 2, NA, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 1, NA, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. == 1, NA, .))))),Dicionarioo=Dicionario )
+
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1,2), NA, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1,2), NA, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. %in%c(1,2), NA, .))))),Dicionarioo=Dicionario )
+
+  #Código que não tem no dicionário
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 2, 3, .))))),Dicionarioo=Dicionario)
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 1, 3, .))))),Dicionarioo=Dicionario)
+
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 2, 3, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. == 2, 3, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. == 1, 3, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. == 1, 3, .))))),Dicionarioo=Dicionario )
+
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1,2), 3, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1,2), 3, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. %in%c(1,2), 3, .))))),Dicionarioo=Dicionario )
+
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1,2), 4, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1), 4, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. %in%c(1,2), 3, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1), 4, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. %in%c(1,2), NA, .))))),Dicionarioo=Dicionario )
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(1), 4, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v5", ~ ifelse(. %in%c(2), NA, .)))))%>%dplyr::mutate(data = purrr::map(data, ~ dplyr::mutate(., dplyr::across("v6", ~ ifelse(. %in%c(1,2), NA, .))))),Dicionarioo=Dicionario )
+  #sem estar no dicionário (enunciado)
+  mrg_citou(nome_split=fazer[[i]],dadoss_split=dados_split,Dicionarioo=Dicionario%>%dplyr::mutate(opcao_label=NA))
+}
+
+#Sem estar no dicionário (enunciado)
+for(i in sample(1:length(fazer),3,replace = FALSE)){
+  nome_split=fazer[[i]];dadoss_split=dados_split;Dicionarioo=Dicionario
+  dadoss<-dadoss_split[[2]][[which(dadoss_split$splits==nome_split)]]
+  b<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                               DICIONARIO=Dicionarioo,
+                               lista_variaveis=list("MRG5"=c("v5","v6")),
+                               adc_labels = TRUE)
+
+  nome_split=fazer[[i]];dadoss_split=dados_split;Dicionarioo=Dicionario%>%dplyr::mutate(pergunta_enunciado=ifelse(opcao_variavel%in%c("v5"),NA,opcao_variavel))
+  dadoss<-dadoss_split[[2]][[which(dadoss_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                               DICIONARIO=Dicionarioo,
+                               lista_variaveis=list("MRG5"=c("v5","v6")),
+                               adc_labels = TRUE)
+  testthat::expect_equal(a[[2]][[1]][[1]],"v5mrg")
+  testthat::expect_equal(a[[2]][[1]][[2]],"Variavel v5mrg possui label nao presente no dicionario. Enuncaiado(s) [v5] ausente(s).")
+  testthat::expect_equal(a[[2]][[1]][[3]],"rodou")
+
+  testthat::expect_equal(a[[1]][[1]][[1]],b[[1]][[1]][[1]])
+  testthat::expect_equal(a[[1]][[1]][[2]],b[[1]][[1]][[2]])
+  testthat::expect_equal(a[[1]][[1]][[3]],b[[1]][[1]][[3]])
+  testthat::expect_equal(a[[1]][[1]][[4]],b[[1]][[1]][[4]])
+  testthat::expect_equal(a[[1]][[1]][[5]],b[[1]][[1]][[5]])
+  testthat::expect_equal(a[[1]][[1]][[6]],c(NA,"v6","Total","Base"))
+
+
+  nome_split=fazer[[i]];dadoss_split=dados_split;Dicionarioo=Dicionario%>%dplyr::mutate(pergunta_enunciado=ifelse(opcao_variavel%in%c("v5","v6"),NA,opcao_variavel))
+  dadoss<-dadoss_split[[2]][[which(dadoss_split$splits==nome_split)]]
+  a<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                               DICIONARIO=Dicionarioo,
+                               lista_variaveis=list("MRG5"=c("v5","v6")),
+                               adc_labels = TRUE)
+  testthat::expect_equal(a[[2]][[1]][[1]],"v5mrg")
+  testthat::expect_equal(a[[2]][[1]][[2]],"Variavel v5mrg possui label nao presente no dicionario. Enuncaiado(s) [v5,v6] ausente(s).")
+  testthat::expect_equal(a[[2]][[1]][[3]],"rodou")
+
+  testthat::expect_equal(a[[1]][[1]][[1]],b[[1]][[1]][[1]])
+  testthat::expect_equal(a[[1]][[1]][[2]],b[[1]][[1]][[2]])
+  testthat::expect_equal(a[[1]][[1]][[3]],b[[1]][[1]][[3]])
+  testthat::expect_equal(a[[1]][[1]][[4]],b[[1]][[1]][[4]])
+  testthat::expect_equal(a[[1]][[1]][[5]],b[[1]][[1]][[5]])
+  testthat::expect_equal(a[[1]][[1]][[6]],c(NA,NA,"Total","Base"))
+
+  a<-PacoteInnovare::FUN_Citou(TABELA=dadoss,
+                               DICIONARIO=Dicionarioo,
+                               lista_variaveis=list("MRG5"=c("v5","v6")),
+                               adc_labels = FALSE)
+  testthat::expect_equal(a[[2]][[1]][[1]],"v5mrg")
+  testthat::expect_equal(a[[2]][[1]][[2]],"Variavel v5mrg possui label nao presente no dicionario. Enuncaiado(s) [v5,v6] ausente(s).")
+  testthat::expect_equal(a[[2]][[1]][[3]],"rodou")
+
+  testthat::expect_equal(a[[1]][[1]][[1]],b[[1]][[1]][[1]])
+  testthat::expect_equal(a[[1]][[1]][[2]],b[[1]][[1]][[2]])
+  testthat::expect_equal(a[[1]][[1]][[3]],b[[1]][[1]][[3]])
+  testthat::expect_equal(a[[1]][[1]][[4]],b[[1]][[1]][[4]])
+  testthat::expect_equal(a[[1]][[1]][[5]],b[[1]][[1]][[5]])
+}
+
+rm(b,a,levels,n_com_peso1,n_com_peso12,fazer,i,n_com_peso2,n_com_peso1,n_com_peso12,n_sem_peso2,n_sem_peso1,n_sem_peso12,base_com_peso,base_sem_peso,nome_split,pct_base_bem_peso,pct_base_com_peso,pct_com_peso1,pct_com_peso12,pct_com_peso2,pct_com_peso2,pct_sem_peso1,pct_sem_peso12,pct_sem_peso2,dadoss,dadoss_split,Dicionarioo)
