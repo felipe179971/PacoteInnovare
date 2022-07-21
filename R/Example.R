@@ -73,8 +73,9 @@ Example<-function(){
   set.seed(11);v19=sample(1:5,n,replace = TRUE)
   #Com texto (sem label)
   set.seed(12);v20<-paste("Texto",sample(1:3,n,replace = TRUE))
-
-  Dados<-data.frame(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20)
+  #Média com NS e NR
+  set.seed(13);v21=sample(1:100,n,replace = TRUE);v21[which(v21%in%c(88))]<--88;v21[which(v21%in%c(69))]<--99
+  Dados<-data.frame(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20,v21)
   #Criando o Dicionário dos Dados#
   Label=data.frame(
     id=c(rep(1,length(v1%>%unique())),
@@ -91,7 +92,8 @@ Example<-function(){
          rep(13,length(v13%>%unique())),
          rep(14,length(v14%>%unique())),
          rep(17,length(v17%>%unique())),
-         rep(19,length(v19%>%unique()))
+         rep(19,length(v19%>%unique())),
+         rep(21,2)
     ),
     variavel=c(rep("v1",length(v1%>%unique())),
                rep("v2",length(v2%>%unique())),
@@ -107,9 +109,10 @@ Example<-function(){
                rep("v13",length(v13%>%unique())),
                rep("v14",length(v14%>%unique())),
                rep("v17",length(v17%>%unique())),
-               rep("v19",length(v19%>%unique()))
+               rep("v19",length(v19%>%unique())),
+               rep("v21",2)
     ),
-    codigo=c(v1%>%unique(),v2%>%unique(),v3%>%unique(),rep(v5%>%unique(),4),rep(v5%>%unique(),4),v13%>%unique(),v14%>%unique(),1,2,3,v19%>%unique()),
+    codigo=c(v1%>%unique(),v2%>%unique(),v3%>%unique(),rep(v5%>%unique(),4),rep(v5%>%unique(),4),v13%>%unique(),v14%>%unique(),1,2,3,v19%>%unique(),-88,-99),
     label=c("Masculino","Feminino",
             "Baixa Renda","Classe Media","Classe Alta","Milionario",
             paste("Cidade",seq(1:10)),
@@ -117,7 +120,8 @@ Example<-function(){
             rep(c("nao","sim"),4),
             rep(c("MRG valor 2","MRG valor 1"),2),
             c("Flamengo","Vasco","Outros"),
-            c("A","B","C","D","E")
+            c("A","B","C","D","E"),
+            c("NS","NR")
 
     ))
   #Colocando o Label do MRG
@@ -128,6 +132,6 @@ Example<-function(){
     id=seq(1:length(vars)),
     variavel=vars
   )%>%dplyr::mutate(enunciado=paste("Enunciado",variavel))
-  rm(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,vars,n,v20)%>%suppressWarnings()
+  rm(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,vars,n,v20,v21)%>%suppressWarnings()
   return(list(Dados,Label,Enunciado))
 }

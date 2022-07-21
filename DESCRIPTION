@@ -18,7 +18,8 @@ Imports:
       tidyverse,
       tidyr,
       purrr,
-      stringr
+      stringr,
+      Hmisc
 Depends: 
     R (>= 2.10)
 Suggests: 
