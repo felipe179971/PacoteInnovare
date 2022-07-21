@@ -188,7 +188,7 @@ FUN_isoladas <- function(TABELA, DICIONARIO, variaveis, adc_labels = TRUE) {
   print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis simples)"))
 
   #Se tenho nenhum warning, criar o tibble composto só por NA
-  if(length(Log_isoladas)==0){Log_isoladas[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
+  #if(length(Log_isoladas)==0){Log_isoladas[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
 
 
   return(list(Resultado_isoladas=out,Log_isoladas=Log_isoladas))

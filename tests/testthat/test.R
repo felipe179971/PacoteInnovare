@@ -54,13 +54,13 @@ Label<-Label%>%dplyr::rename(opcao_variavel="variavel",opcao_cod="codigo",opcao_
 #Executando#########################################
 #Testando se faz a frequencia
 a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = FALSE)
-testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
+testthat::expect_equal(length(a[[2]]),0)
 a<-a[[1]]%>%data.frame()
 testthat::expect_equal(nrow(a),4);testthat::expect_equal(ncol(a),5);testthat::expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso"))
 testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a[,2],c(51,49,100,100));testthat::expect_equal(a[,3],c(50,50,100,100));testthat::expect_equal(a[,4],c(51,49,100,100));testthat::expect_equal(a[,5],c(50,50,100,100))
 #Testando o parâmetro adc_labels
 a<-PacoteInnovare::FUN_isoladas(TABELA = dados_peso, DICIONARIO = Label, variaveis = "v1", adc_labels = TRUE)
-testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
+testthat::expect_equal(length(a[[2]]),0)
 a<-a[[1]]%>%data.frame()
 testthat::expect_equal(nrow(a),4);testthat::expect_equal(ncol(a),6);testthat::expect_equal(colnames(a),c("v1","n","n_peso","pct","pct_peso","v1_label"))
 testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a[,2],c(51,49,100,100));testthat::expect_equal(a[,3],c(50,50,100,100));testthat::expect_equal(a[,4],c(51,49,100,100));testthat::expect_equal(a[,5],c(50,50,100,100));testthat::expect_equal(a[,6],c("Feminino","Masculino","Total","Base"))
@@ -68,9 +68,9 @@ testthat::expect_equal(a[,1],c("2","1","Total","Base"));testthat::expect_equal(a
 rm(a,dados,dados_peso,Dados_splits,Label,splits,n,v1,v2,v3,v4)%>%suppressWarnings()
 
 ###################Time_Difference##############################################
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03"),"1:0:0")
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03"),"1:0:53")
-testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03"),"0:10:0")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:53 -03"),"01:00:00")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:53 -03","2022-07-14 16:00:00 -03"),"01:00:53")
+testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-14 16:50:00 -03"),"00:10:00")
 testthat::expect_equal(PacoteInnovare::Time_Difference("2022-07-14 17:00:00 -03","2022-07-15 16:52:10 -03"),"-23:23:13")
 
 #######################func_labels##############################################
@@ -152,7 +152,7 @@ mrg_V13<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              lista_variaveis=list("MRG13"=c("v13","v14")),
                              adc_labels = TRUE)
-  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
+  testthat::expect_equal(length(a[[2]]),0)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso","v13mrg_label"))
@@ -189,7 +189,7 @@ mrg_V13<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              lista_variaveis=list("MRG13"=c("v13","v14")),
                              adc_labels = FALSE)
-  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
+  testthat::expect_equal(length(a[[2]]),0)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13mrg","n","n_peso","pct","pct_peso"))
@@ -386,7 +386,7 @@ isolada_V13<-function(nome_split,dadoss_split,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              variaveis=c("v13"),
                              adc_labels = TRUE)
-  testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)
+  testthat::expect_equal(length(a[[2]]),0)
   a<-a[[1]]
 
   testthat::expect_equal(colnames(a[[1]]),c("v13","n","n_peso","pct","pct_peso","v13_label"))
@@ -430,7 +430,7 @@ isolada_V13_com_codigo_a_mais<-function(nome_split,dadoss_split,Dicionarioo){
                              DICIONARIO=Dicionarioo,
                              variaveis=c("v13"),
                              adc_labels = TRUE)
-  if(all(is.na(dadoss$v13))){testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
+  if(all(is.na(dadoss$v13))){testthat::expect_equal(length(a[[2]]),0)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
 
   a<-a[[1]]
 
@@ -472,7 +472,7 @@ isolada_V13_com_codigo_a_mais<-function(nome_split,dadoss_split,Dicionarioo){
                                   DICIONARIO=Dicionarioo,
                                   variaveis=c("v13"),
                                   adc_labels = FALSE)
-  if(all(is.na(dadoss$v13))){testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
+  if(all(is.na(dadoss$v13))){testthat::expect_equal(length(a[[2]]),0)}else{testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE)}
   a<-a[[1]]
   testthat::expect_equal(colnames(a[[1]]),c("v13","n","n_peso","pct","pct_peso"))
 
@@ -583,7 +583,7 @@ mrg_citou<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
 
   if(length(levels)==2){
     if(length(levels)%in%c(1,2)){
-      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
+      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(length(a[[2]]),0),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
     }
   }
   if(length(levels)==3){
@@ -632,7 +632,7 @@ mrg_citou<-function(nome_split,dadoss_split,pesoo,Dicionarioo){
   levels=dadoss%>%dplyr::select(v5,v6)%>%pivot_longer(cols=c(v5,v6))%>%mutate(value=as.factor(value))%>%select(value)%>%summarise(levels(value))%>%pull
   if(length(levels)==2){
     if(length(levels)%in%c(1,2)){
-      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(all(is.na(a[[2]][[1]])),TRUE),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
+      ifelse(all(c("1","2")%in%levels),testthat::expect_equal(length(a[[2]]),0),testthat::expect_equal(all(is.na(a[[2]][[1]])),FALSE))
     }
   }
   if(length(levels)==3){

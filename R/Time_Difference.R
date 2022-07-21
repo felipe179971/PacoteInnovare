@@ -29,9 +29,11 @@ Time_Difference<-function(end,start){
   dif=difftime(end, start, units = "secs")[[1]]
   horas=(dif/60)/60
   if(stringr::str_detect(horas,"[.]")){minutos=as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(horas,1)),"[.]") ))*60}else{minutos=0}
-  if(stringr::str_detect(minutos,"[.]")){segundos=ceiling(as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(minutos,1)),"[.]") ))*60)}else{segundos=0}#;if(horas==0 & minutos==0){segundos=ceiling(dif)}
-  #segundos<-ifelse(round(segundos)<=0,1,round(segundos))
-  return(paste0(trunc(horas),":",trunc(minutos),":",segundos))
+  if(stringr::str_detect(minutos,"[.]")){segundos=ceiling(as.numeric(paste0("0.",stringr::str_remove(sub("*..", "", as.character(minutos,1)),"[.]") ))*60)}else{segundos=0}
+  #Formatando
+  horas<-ifelse(stringr::str_length(trunc(horas))==1,stringr::str_c(0,trunc(horas)),trunc(horas))
+  minutos<-ifelse(stringr::str_length(trunc(minutos))==1,stringr::str_c(0,trunc(minutos)),trunc(minutos))
+  segundos<-ifelse(stringr::str_length(segundos)==1,stringr::str_c(0,segundos),segundos)
+  return(paste0(horas,":",minutos,":",segundos))
 }
 
-#Time_Difference(end="2022-07-14 17:00:53 -03",start="2022-07-14 16:00:53 -03")

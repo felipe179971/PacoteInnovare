@@ -197,7 +197,7 @@ FUN_MRG <- function(TABELA, DICIONARIO, lista_variaveis, adc_labels = T) {
   print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (variaveis MRG's)"))
 
   #Se tenho nenhum warning, criar o tibble composto só por NA
-  if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
+  #if(length(Log_MRG)==0){Log_MRG[[1]]<-tibble::tibble(Variavel=NA,`Problema`=NA,Status=NA)}
 
 
   return(list(Resultado_MRG=out,Log_MRG=Log_MRG))
