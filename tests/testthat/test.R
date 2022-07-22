@@ -775,13 +775,13 @@ rm(w,pct_com_peso3,pct_sem_peso3, pct_com_peso123,pct_sem_peso123,j,n_sem_peso12
 
 TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]]
 variaveis=c("v15","v16","v21")
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(a<-PacoteInnovare::FUN_media(TABELA,variaveis))))
+testthat::expect_warning(a<-PacoteInnovare::FUN_media(TABELA,variaveis))
 testthat::expect_equal(paste(as.character(a[[1]]),collapse=""),"c(\"v15m\", \"v16m\", \"v21m\")c(10, 10.9, 49.1263157894737)c(10, 10.9, 49.1263157894737)c(100, 100, 95)c(100, 100, 95)c(0, 5.57320429022713, 29.711106206718)c(0, 5.57320429022713, 29.711106206718)c(0, 0.557320429022713, 3.04829517845955)c(0, 0.557320429022713, 3.04829517845955)")
-testthat::expect_equal(paste(as.character(a[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"rodou\", \"rodou\", \"rodou\"))")
+testthat::expect_equal(paste(as.character(a[[2]]),collapse=""),"list(Variavel = \"v21\", Problema = \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", Status = \"rodou\")")
 vars_na = c(-88, -99)
 aparada = F
 cut = 2.5
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(b<-PacoteInnovare::FUN_media(TABELA,variaveis,vars_na,aparada,cut))))
+testthat::expect_warning(b<-PacoteInnovare::FUN_media(TABELA,variaveis,vars_na,aparada,cut))
 testthat::expect_equal(a,b)
 #vars_na
 `%nin%` = Negate(`%in%`)
@@ -790,89 +790,91 @@ c<-PacoteInnovare::FUN_media(TABELA,variaveis,vars_na=NA)
 testthat::expect_equal(paste(as.character(c[[1]]),collapse=""),"c(\"v15m\", \"v16m\", \"v21m\")c(10, 10.9, 41.94)c(10, 10.9, 41.94)c(100, 100, 100)c(100, 100, 100)c(0, 5.57320429022713, 42.7874285322692)c(0, 5.57320429022713, 42.7874285322692)c(0, 0.557320429022713, 4.27874285322692)c(0, 0.557320429022713, 4.27874285322692)")
 testthat::expect_equal(paste(as.character(c[[2]]),collapse=""),"")
 testthat::expect_equal(c[[1]][[2]][which(a[[1]][[1]]=="v21m")],dados%>%dplyr::summarise(mean(v21))%>%as.numeric()  )
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(c<-PacoteInnovare::FUN_media(TABELA,variaveis,vars_na=c(-88),aparada,cut))))
-testthat::expect_equal(paste(as.character(c[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: 0 codigo(s) -88 (vars_na) foram transformado(s) em NA\", \"Variavel v16: 0 codigo(s) -88 (vars_na) foram transformado(s) em NA\", \"Variavel v21: 2 codigo(s) -88 (vars_na) foram transformado(s) em NA\"), Status = c(\"rodou\", \"rodou\", \"rodou\"))")
+testthat::expect_warning(c<-PacoteInnovare::FUN_media(TABELA,variaveis,vars_na=c(-88),aparada,cut))
+testthat::expect_equal(paste(as.character(c[[2]]),collapse=""),"list(Variavel = \"v21\", Problema = \"Variavel v21: 2 codigo(s) -88 (vars_na) foram transformado(s) em NA\", Status = \"rodou\")")
 testthat::expect_equal(c[[1]][[2]][which(a[[1]][[1]]=="v21m")],dados%>%dplyr::filter(v21%nin%c(-88))%>%dplyr::summarise(mean(v21))%>%as.numeric()  )
 #aparada
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis),PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F))))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(d<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T))))
+testthat::expect_warning(testthat::expect_warning(
+  testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis),PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F))
+))
+testthat::expect_warning(
+  d<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T)
+)
 testthat::expect_equal(d[[1]][[1]],c("v15ma","v16ma","v21ma"))
 #cut
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis),PacoteInnovare::FUN_media(TABELA,variaveis,cut=2.5))
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis),PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F,cut=49))
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis)[[1]][,-1],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=0)[[1]][,-1])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T)[[1]][["n"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis)[[1]][["n"]][[1]])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T)[[1]][["n_peso"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis)[[1]][["n_peso"]][[1]])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=5)[[1]][["n"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T)[[1]][["n"]][[1]])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=5)[[1]][["n_peso"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T)[[1]][["n_peso"]][[1]])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=10)[[1]][["n"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=5)[[1]][["n"]][[1]])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_lt(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=10)[[1]][["n_peso"]][[1]],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=5)[[1]][["n_peso"]][[1]])
-))))))
+))
 testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
   x<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=50) #Configurar erro
 )))
-testthat::expect_equal(paste(as.character(x[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: voce tentou excluir 100% ou mais dos dados. cut deve ser < 50\", \"Variavel v16: voce tentou excluir 100% ou mais dos dados. cut deve ser < 50\", \"Variavel v21: voce tentou excluir 100% ou mais dos dados. cut deve ser < 50\"), Status = c(\"nao rodou\", \"nao rodou\", \"nao rodou\"))")
+testthat::expect_equal(paste(as.character(x[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: voce tentou excluir 100% ou mais dos dados ao calcular a Media Aparada. cut deve ser < 50\", \"Variavel v16: voce tentou excluir 100% ou mais dos dados ao calcular a Media Aparada. cut deve ser < 50\", \"Variavel v21: voce tentou excluir 100% ou mais dos dados ao calcular a Media Aparada. cut deve ser < 50\"), Status = c(\"nao rodou\", \"nao rodou\", \"nao rodou\"))")
 testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
   xx<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=100) #Configurar erro
 )))
 testthat::expect_equal(paste(as.character(x[[2]]),collapse=""),paste(as.character(x[[2]]),collapse=""))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(
   xxx<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=49) #Configurar erro
-)))
-testthat::expect_equal(paste(as.character(xxx[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"rodou\", \"rodou\", \"rodou\"))")
+)
+testthat::expect_equal(paste(as.character(xxx[[2]]),collapse=""),"list(Variavel = \"v21\", Problema = \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", Status = \"rodou\")")
 rm(x,xx,xxx)%>%suppressWarnings()
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(
   h<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=0) #Configurar erro
-)))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+)
+testthat::expect_warning(
   i<-PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F) #Configurar erro
-)))
+)
 testthat::expect_equal(h[[1]][-1],i[[1]][-1])
 testthat::expect_equal(h[[2]],i[[2]])
 testthat::expect_equal(paste(as.character(h[[1]]),collapse=""),"c(\"v15ma\", \"v16ma\", \"v21ma\")c(10, 10.9, 49.1263157894737)c(10, 10.9, 49.1263157894737)c(100, 100, 95)c(100, 100, 95)c(0, 5.57320429022713, 29.711106206718)c(0, 5.57320429022713, 29.711106206718)c(0, 0.557320429022713, 3.04829517845955)c(0, 0.557320429022713, 3.04829517845955)")
-testthat::expect_equal(paste(as.character(h[[2]]),collapse=""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"rodou\", \"rodou\", \"rodou\"))")
+testthat::expect_equal(paste(as.character(h[[2]]),collapse=""),"list(Variavel = \"v21\", Problema = \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", Status = \"rodou\")")
 
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis,aparada=T,cut=0)[[1]][,-1],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F,cut=0)[[1]][,-1])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis)[[1]][,-1],PacoteInnovare::FUN_media(TABELA,variaveis,aparada=F,cut=0)[[1]][,-1])
-))))))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+))
+testthat::expect_warning(
   testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis)[[1]][,-1][["n"]],c(TABELA%>%nrow,TABELA%>%nrow,TABELA%>%dplyr::filter(v21%nin%c(-99,-88))%>%nrow))
-)))
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
-  testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis,vars_na=F)[[1]][,-1][["n"]],c(TABELA%>%nrow,TABELA%>%nrow,TABELA%>%nrow))
-)))
+)
+testthat::expect_equal(PacoteInnovare::FUN_media(TABELA,variaveis,vars_na=F)[[1]][,-1][["n"]],c(TABELA%>%nrow,TABELA%>%nrow,TABELA%>%nrow))
 #peso
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(
   e<-PacoteInnovare::FUN_media(TABELA=TABELA%>%dplyr::mutate(peso=v4),variaveis)
-)))
+)
 testthat::expect_equal(e[[1]][["media"]],dados%>%dplyr::mutate(v21=ifelse(v21%in%c(-88,-99),NA,v21)) %>%dplyr::summarise(mean(v15),mean(v16),mean(v21,na.rm=T))%>%as.numeric())
 testthat::expect_equal(e[[1]][["media_peso"]],dados%>%dplyr::mutate(v21=ifelse(v21%in%c(-88,-99),NA,v21))%>%dplyr::summarise(weighted.mean(v15,w=v4,na.rm=T),weighted.mean(v16,w=v4,na.rm=T),weighted.mean(v21,w=v4,na.rm=T))%>%as.numeric())
 
 #Testando NA's
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(
   f<-PacoteInnovare::FUN_media(TABELA=TABELA%>%dplyr::mutate(v21=NA),variaveis)
-)))
-testthat::expect_equal(paste(f[[2]][[1]],collapse = ""),"c(\"v15\", \"v16\", \"v21\")c(\"Variavel v15: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21 so tem NA\")c(\"rodou\", \"rodou\", \"rodou\")")
+)
+testthat::expect_equal(paste(f[[2]][[1]],collapse = ""),"v21Variavel v21 so tem NArodou")
 testthat::expect_equal(paste(f[[1]],collapse = ""),"c(\"v15m\", \"v16m\", \"v21m\")c(10, 10.9, 0)c(10, 10.9, 0)c(100, 100, 0)c(100, 100, 0)c(0, 5.57320429022713, 0)c(0, 5.57320429022713, 0)c(0, 0.557320429022713, 0)c(0, 0.557320429022713, 0)")
 testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(f<-PacoteInnovare::FUN_media(TABELA=TABELA%>%dplyr::mutate(v21=NA,v15=NA,v16=NA),variaveis))))
 testthat::expect_equal(paste(f[[2]],collapse = ""),"list(Variavel = c(\"v15\", \"v16\", \"v21\"), Problema = c(\"Variavel v15 so tem NA\", \"Variavel v16 so tem NA\", \"Variavel v21 so tem NA\"), Status = c(\"rodou\", \"rodou\", \"rodou\"))")
@@ -881,18 +883,18 @@ g<-TABELA
 g[[variaveis[1]]]<-as.character(g[[variaveis[1]]])
 g[[variaveis[3]]]<-as.character(g[[variaveis[3]]])
 g[[variaveis[1]]][[7]]<-"A"
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
   h<-PacoteInnovare::FUN_media(TABELA=g,variaveis)
-))))
-testthat::expect_equal(paste(h[[2]],collapse = ""),"list(Variavel = c(\"v15\", \"v16\", \"v21\", \"v21\"), Problema = c(\"Variavel v15 nao e numerica. Na tentativa de forcar a conversao 1 NA(s) foram gerados.Por tanto, calculos nao foram executados\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21 nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, calculos foram executados com a variavel convertida\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"nao rodou\", \n\"rodou\", \"rodou\", \"rodou\"))")
+)))
+testthat::expect_equal(paste(h[[2]],collapse = ""),"list(Variavel = c(\"v15\", \"v21\", \"v21\"), Problema = c(\"Variavel v15 nao e numerica. Na tentativa de forcar a conversao 1 NA(s) foram gerados.Por tanto, a Media nao foi executada\", \"Variavel v21 nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, a Media foi executada com a variavel convertida\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"nao rodou\", \"rodou\", \"rodou\"))")
 i<-g
 i[[variaveis[1]]][[9]]<-"C"
 i[[variaveis[1]]][[10]]<-NA
 
-testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
+testthat::expect_warning(testthat::expect_warning(testthat::expect_warning(
   j<-PacoteInnovare::FUN_media(TABELA=i,variaveis)
-))))
-testthat::expect_equal(paste(j[[2]],collapse = ""),"list(Variavel = c(\"v15\", \"v16\", \"v21\", \"v21\"), Problema = c(\"Variavel v15 nao e numerica. Na tentativa de forcar a conversao 2 NA(s) foram gerados.Por tanto, calculos nao foram executados\", \"Variavel v16: 0 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\", \"Variavel v21 nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, calculos foram executados com a variavel convertida\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"nao rodou\", \n\"rodou\", \"rodou\", \"rodou\"))")
+)))
+testthat::expect_equal(paste(j[[2]],collapse = ""),"list(Variavel = c(\"v15\", \"v21\", \"v21\"), Problema = c(\"Variavel v15 nao e numerica. Na tentativa de forcar a conversao 2 NA(s) foram gerados.Por tanto, a Media nao foi executada\", \"Variavel v21 nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, a Media foi executada com a variavel convertida\", \"Variavel v21: 5 codigo(s) -88 -99 (vars_na) foram transformado(s) em NA\"), Status = c(\"nao rodou\", \"rodou\", \"rodou\"))")
 
 rm(Log_media,out,antes,depois,erro,msg,Tempo_Inicio,variaveis,TABELA,a,b,c,d,e,f,g,h,i,j,aparada,cut,variaceis,vars_na,w,pct_com_peso3,pct_sem_peso3, pct_com_peso123,pct_sem_peso123,j,n_sem_peso123,n_sem_peso3,n_com_peso123,n_com_peso3,n,b,a,levels,n_com_peso1,n_com_peso12,fazer,i,n_com_peso2,n_com_peso1,n_com_peso12,n_sem_peso2,n_sem_peso1,n_sem_peso12,base_com_peso,base_sem_peso,nome_split,pct_base_bem_peso,pct_base_com_peso,pct_com_peso1,pct_com_peso12,pct_com_peso2,pct_com_peso2,pct_sem_peso1,pct_sem_peso12,pct_sem_peso2,dadoss,dadoss_split,Dicionarioo)%>%suppressWarnings()
 

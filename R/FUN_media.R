@@ -124,7 +124,7 @@
 #'     v16=ifelse(v16==6,"character",v16),
 #'     v21=as.character(v21)
 #'     ),
-#'   variaveis=c("v15","v16","v21"),
+#'   variaveis=c("v15","v16","v21")
 #' )
 #' #Erro CUT
 #' PacoteInnovare::FUN_media(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
@@ -145,6 +145,7 @@ FUN_media <- function(TABELA, variaveis, vars_na = c(-88, -99), aparada = FALSE,
 
   out <- vector("list", length = length(variaveis))
   Log_media<-list()
+  msg_media<-ifelse(aparada==TRUE,"Media Aparada",'Media')
 
   for (i in seq_along(out)) {
     #Error
@@ -156,14 +157,14 @@ FUN_media <- function(TABELA, variaveis, vars_na = c(-88, -99), aparada = FALSE,
       depois<-sum(is.na(TABELA[[variaveis[i]]]))
       #Se tenho mais NA's que antes, algum valor virou NA e não numérico. DEU RUIM! (mas se ela for só NA, já tenho um warning pra ela)
       if(depois!=antes){
-        msg=stringr::str_c("Variavel ", variaveis[i]," nao e numerica. Na tentativa de forcar a conversao ",depois-antes," NA(s) foram gerados.Por tanto, calculos nao foram executados")
+        msg=stringr::str_c("Variavel ", variaveis[i]," nao e numerica. Na tentativa de forcar a conversao ",depois-antes," NA(s) foram gerados.Por tanto, a ",msg_media," nao foi executada")
         erro=erro+1
         warning(msg)
         if(length(Log_media)==0){Log_media[[1]]<-tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="nao rodou")}else{Log_media[[1]]<-dplyr::bind_rows(Log_media[[1]],tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="nao rodou"))  }
       }else{
         #Se ela for 100% NA, já tenho um warning pra ela
         if(sum(is.na(TABELA[[variaveis[i]]]))!=nrow(TABELA)){
-          msg=stringr::str_c("Variavel ", variaveis[i]," nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, calculos foram executados com a variavel convertida")
+          msg=stringr::str_c("Variavel ", variaveis[i]," nao e numerica. Conversao concluida sem a criacao de nenhum NA. Por tanto, a ",msg_media," foi executada com a variavel convertida")
           warning(msg)
           if(length(Log_media)==0){Log_media[[1]]<-tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou")}else{Log_media[[1]]<-dplyr::bind_rows(Log_media[[1]],tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou"))  }
           }
@@ -171,7 +172,7 @@ FUN_media <- function(TABELA, variaveis, vars_na = c(-88, -99), aparada = FALSE,
     }
     #Se tenho cut>=50, estou tentando excluir mais de 100% dos dados
     if(cut>=50){
-      msg=stringr::str_c("Variavel ", variaveis[i],": voce tentou excluir 100% ou mais dos dados. cut deve ser < 50")
+      msg=stringr::str_c("Variavel ", variaveis[i],": voce tentou excluir 100% ou mais dos dados ao calcular a ",msg_media,". cut deve ser < 50")
       erro=erro+1
       warning(msg)
       if(length(Log_media)==0){Log_media[[1]]<-tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="nao rodou")}else{Log_media[[1]]<-dplyr::bind_rows(Log_media[[1]],tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="nao rodou"))  }
@@ -225,15 +226,17 @@ FUN_media <- function(TABELA, variaveis, vars_na = c(-88, -99), aparada = FALSE,
   #Se vars_na for diferente de NA, ver quantos foram convertidos em NA
     if(all(!is.na(vars_na))){
       if(erro==0){if(sum(is.na(TABELA[[variaveis[i]]]))!=nrow(TABELA)){ #Se for isso, já tenho warnings pra ele
-        msg=stringr::str_c("Variavel ", variaveis[i],": ",sum(TABELA[[variaveis[i]]]%in%vars_na)," codigo(s) ",paste(vars_na,collapse = " ")," (vars_na) foram transformado(s) em NA")
-        warning(msg)
-        if(length(Log_media)==0){Log_media[[1]]<-tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou")}else{Log_media[[1]]<-dplyr::bind_rows(Log_media[[1]],tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou"))  }
+        if(sum(TABELA[[variaveis[i]]]%in%vars_na)!=0){#warning só se tiver convertido algo
+          msg=stringr::str_c("Variavel ", variaveis[i],": ",sum(TABELA[[variaveis[i]]]%in%vars_na)," codigo(s) ",paste(vars_na,collapse = " ")," (vars_na) foram transformado(s) em NA")
+          warning(msg)
+          if(length(Log_media)==0){Log_media[[1]]<-tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou")}else{Log_media[[1]]<-dplyr::bind_rows(Log_media[[1]],tibble::tibble(Variavel=variaveis[i],`Problema`=msg,Status="rodou"))  }
+        }
       }}
     }
-    print(paste0(variaveis[i]," [Variavel media ",i,"/",length(variaveis),"]"))
+    print(paste0(variaveis[i]," [Variavel ",msg_media," ",i,"/",length(variaveis),"]"))
 
   }
-  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (Medias)"))
+  print(paste0("A funcao levou ",PacoteInnovare::Time_Difference(Sys.time(),Tempo_Inicio)," para calcular as frequencias (",msg_media,")"))
 
   return(list(Resultado_media=dplyr::bind_rows(out),Log_media=Log_media))
 }

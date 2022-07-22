@@ -133,7 +133,7 @@ PacoteInnovare::FUN_media(
     v16=ifelse(v16==6,"character",v16),
     v21=as.character(v21)
     ),
-  variaveis=c("v15","v16","v21"),
+  variaveis=c("v15","v16","v21")
 )
 #Erro CUT
 PacoteInnovare::FUN_media(TABELA=dados_split[[2]][[which(dados_split$splits=="Geral")]],
